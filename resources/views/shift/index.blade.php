@@ -11,20 +11,59 @@
     {{-- Form Tambah --}}
     <div class="card" style="align-self:start">
         <div class="card-header">
-            <span><i class="bi bi-plus-circle me-2" style="color:var(--primary)"></i>Tambah Shift</span>
+            <span><i class="bi bi-plus-circle me-2" style="color:var(--primary)"></i>Penetapan Shift</span>
         </div>
         <div class="card-body">
             <form action="{{ route('shift.store') }}" method="POST">
                 @csrf
+                @if(auth()->user()->isAdmin())
                 <div class="form-group">
-                    <label class="form-label">Tanggal</label>
-                    <input type="date" name="tanggal" class="form-control" min="{{ date('Y-m-d') }}"
-                        value="{{ old('tanggal') }}" required>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                        <label class="form-label" style="margin-bottom:0">Pilih Pegawai</label>
+                        <button type="button" onclick="selectAllUsers()" class="btn btn-outline" style="font-size:10px;padding:2px 6px;border-radius:4px">Pilih Semua</button>
+                    </div>
+                    <select name="user_ids[]" id="userSelect" class="form-control form-select" multiple style="height: 120px" required>
+                        @foreach($users as $u)
+                        <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->unit ?? '-' }})</option>
+                        @endforeach
+                    </select>
+                    <div class="form-text">Tahan Ctrl/Cmd untuk memilih lebih dari satu</div>
                 </div>
+                @endif
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">Tanggal Mulai</label>
+                        <input type="date" name="tanggal_mulai" class="form-control" min="{{ date('Y-m-d') }}"
+                            value="{{ old('tanggal_mulai', date('Y-m-d')) }}" required onchange="syncEndDate()">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">Tanggal Selesai</label>
+                        <input type="date" name="tanggal_selesai" id="tanggalSelesai" class="form-control"
+                            value="{{ old('tanggal_selesai', date('Y-m-d')) }}" required>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                    <div class="form-check" style="display:flex;align-items:center;padding:10px;border:1.5px solid var(--gray-200);border-radius:10px;background:var(--gray-50)">
+                        <input class="form-check-input" type="checkbox" name="skip_sabtu" id="skipSabtu" style="margin-right:10px;width:18px;height:18px">
+                        <label class="form-check-label" for="skipSabtu" style="font-size:12px;font-weight:600;margin-bottom:0">Lewati Sabtu</label>
+                    </div>
+                    <div class="form-check" style="display:flex;align-items:center;padding:10px;border:1.5px solid var(--gray-200);border-radius:10px;background:var(--gray-50)">
+                        <input class="form-check-input" type="checkbox" name="skip_minggu" id="skipMinggu" style="margin-right:10px;width:18px;height:18px">
+                        <label class="form-check-label" for="skipMinggu" style="font-size:12px;font-weight:600;margin-bottom:0">Lewati Minggu</label>
+                    </div>
+                </div>
+
+                <div class="form-check" style="display:flex;align-items:center;padding:10px;border:1.5px solid var(--gray-200);border-radius:10px;background:var(--gray-50);margin-bottom:18px">
+                    <input class="form-check-input" type="checkbox" name="skip_libur" id="skipLibur" style="margin-right:10px;width:18px;height:18px">
+                    <label class="form-check-label" for="skipLibur" style="font-size:12px;font-weight:600;margin-bottom:0">Lewati Hari Libur Nasional (Tanggal Merah)</label>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Jenis Shift</label>
                     <select name="jenis_shift" class="form-control form-select" id="jenisShift" onchange="setJam()" required>
-                        <option value="pagi">🌅 Pagi (07:00 - 14:00)</option>
+                        <option value="pagi">🌅 Pagi (07:00 - 16:00 / Jumat 17:00)</option>
                         <option value="siang">☀️ Siang (14:00 - 21:00)</option>
                         <option value="malam">🌙 Malam (21:00 - 07:00)</option>
                     </select>
@@ -36,7 +75,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Jam Keluar</label>
-                        <input type="time" name="jam_keluar" id="jamKeluar" class="form-control" value="14:00" required>
+                        <input type="time" name="jam_keluar" id="jamKeluar" class="form-control" value="16:00" required>
                     </div>
                 </div>
                 <div class="form-group">
@@ -130,12 +169,48 @@
 
 @push('scripts')
 <script>
-const shiftMap = { pagi:['07:00','14:00'], siang:['14:00','21:00'], malam:['21:00','07:00'] };
+const shiftMap = { pagi:['07:00','16:00'], siang:['14:00','21:00'], malam:['21:00','07:00'] };
+
 function setJam() {
     const v = document.getElementById('jenisShift').value;
+    const dateInput = document.getElementsByName('tanggal_mulai')[0].value;
+    
     document.getElementById('jamMasuk').value = shiftMap[v][0];
-    document.getElementById('jamKeluar').value = shiftMap[v][1];
+    
+    let jamKeluar = shiftMap[v][1];
+    
+    // Logika Khusus Jumat (Pagi)
+    if (v === 'pagi' && dateInput) {
+        const day = new Date(dateInput).getDay();
+        if (day === 5) { // 5 = Jumat
+            jamKeluar = '17:00';
+        }
+    }
+    
+    document.getElementById('jamKeluar').value = jamKeluar;
 }
+
+function selectAllUsers() {
+    const select = document.getElementById('userSelect');
+    if (!select) return;
+    for (let i = 0; i < select.options.length; i++) {
+        select.options[i].selected = true;
+    }
+}
+
+function syncEndDate() {
+    const start = document.getElementsByName('tanggal_mulai')[0].value;
+    const endInput = document.getElementById('tanggalSelesai');
+    if (start && (!endInput.value || endInput.value < start)) {
+        endInput.value = start;
+        endInput.min = start;
+    }
+}
+
+// Init min date for end date
+document.addEventListener('DOMContentLoaded', () => {
+    syncEndDate();
+});
 </script>
 @endpush
 @endsection

@@ -1,0 +1,30 @@
+[app]
+name = "absensi-rsud"
+primary_region = "sin" # Singapore — terdekat dari Indonesia
+
+[build]
+dockerfile = "Dockerfile"
+
+[env]
+APP_ENV = "production"
+APP_DEBUG = "false"
+DB_CONNECTION = "pgsql"
+DB_PORT = "5432"
+DB_DATABASE = "postgres"
+DB_USERNAME = "postgres"
+DB_SSLMODE = "require"
+SESSION_DRIVER = "file"
+CACHE_STORE = "file"
+QUEUE_CONNECTION = "sync"
+
+[http_service]
+internal_port = 8000
+force_https = true
+auto_stop_machines = true
+auto_start_machines = true
+min_machines_running = 0
+
+[[vm]]
+memory = "256mb"
+cpu_kind = "shared"
+cpus = 1

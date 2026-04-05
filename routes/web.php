@@ -3,6 +3,7 @@
 use App\Http\Controllers\Web\AbsensiController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\DepartmentController;
 use App\Http\Controllers\Web\IzinController;
 use App\Http\Controllers\Web\LaporanController;
 use App\Http\Controllers\Web\SkorController;
@@ -44,12 +45,47 @@ Route::middleware(['auth'])->group(function () {
         // Kelola Pegawai
         Route::resource('/pegawai', PegawaiController::class);
 
-        // Laporan
+        // Kelola Departemen
+        Route::resource('/departemen', DepartmentController::class)->parameters([
+            'departemen' => 'departemen'
+        ]);
+
+        // Laporan & Rekapitulasi
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/export', [LaporanController::class, 'export'])->name('laporan.export');
+        Route::get('/laporan/rekap', [LaporanController::class, 'rekap'])->name('laporan.rekap');
+        Route::get('/laporan/rekap/export', [LaporanController::class, 'exportRekap'])->name('laporan.export_rekap');
 
         // Skor Kehadiran
         Route::get('/laporan/skor', [SkorController::class, 'index'])->name('skor.index');
         Route::get('/laporan/skor/cetak', [SkorController::class, 'cetak'])->name('skor.cetak');
+
+        // Persetujuan Izin/Cuti
+        Route::post('/izin/{izin}/approve', [IzinController::class, 'approve'])->name('izin.approve');
+        Route::post('/izin/{izin}/reject', [IzinController::class, 'reject'])->name('izin.reject');
+
+        // Persetujuan Lembur
+        Route::post('/lembur/{lembur}/approve', [\App\Http\Controllers\Web\LemburController::class, 'approve'])->name('lembur.approve');
+        Route::post('/lembur/{lembur}/reject', [\App\Http\Controllers\Web\LemburController::class, 'reject'])->name('lembur.reject');
+
+        // Manajemen Hari Libur Nasional
+        Route::resource('/libur', \App\Http\Controllers\Web\LiburController::class)->only(['index', 'store', 'destroy']);
+
+        // Persetujuan Koreksi Absensi
+        Route::post('/koreksi/{koreksi}/approve', [\App\Http\Controllers\Web\KoreksiAbsensiController::class, 'approve'])->name('koreksi.approve');
+        Route::post('/koreksi/{koreksi}/reject', [\App\Http\Controllers\Web\KoreksiAbsensiController::class, 'reject'])->name('koreksi.reject');
     });
+
+    // Lembur (Pegawai & Admin)
+    Route::resource('/lembur', \App\Http\Controllers\Web\LemburController::class)->only(['index', 'store', 'destroy']);
+
+    // Koreksi Absensi (Pegawai & Admin)
+    Route::resource('/koreksi', \App\Http\Controllers\Web\KoreksiAbsensiController::class)->only(['index', 'store', 'destroy']);
+    
+    // Tukar Shift
+    Route::get('/tukar-shift', [\App\Http\Controllers\Web\TukarShiftController::class, 'index'])->name('tukar_shift.index');
+    Route::post('/tukar-shift', [\App\Http\Controllers\Web\TukarShiftController::class, 'store'])->name('tukar_shift.store');
+    Route::post('/tukar-shift/{tukarShift}/confirm', [\App\Http\Controllers\Web\TukarShiftController::class, 'confirm'])->name('tukar_shift.confirm');
+    Route::post('/tukar-shift/{tukarShift}/approve', [\App\Http\Controllers\Web\TukarShiftController::class, 'approve'])->name('tukar_shift.approve');
+    Route::get('/tukar-shift/peer-shifts/{user}', [\App\Http\Controllers\Web\TukarShiftController::class, 'getPeerShifts'])->name('tukar_shift.peer_shifts');
 });

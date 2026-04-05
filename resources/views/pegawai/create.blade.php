@@ -3,84 +3,159 @@
 @section('breadcrumb')Manajemen / <a href="{{ route('pegawai.index') }}" style="color:inherit">Pegawai</a> / <span>Tambah</span>@endsection
 
 @section('content')
-<div style="font-size:22px;font-weight:800;color:var(--gray-900);margin-bottom:24px">Tambah Pegawai Baru</div>
+<div style="margin-bottom:28px">
+    <h1 style="margin:0;font-size:26px;font-weight:800;color:var(--gray-900);letter-spacing:-0.5px">Tambah Pegawai Baru</h1>
+    <p style="margin:4px 0 0;font-size:14px;color:var(--gray-500)">Lengkapi formulir di bawah ini untuk mendaftarkan pegawai baru ke sistem.</p>
+</div>
 
-<div style="max-width:680px">
-    <div class="card">
-        <div class="card-header">
-            <span><i class="bi bi-person-plus me-2" style="color:var(--primary)"></i>Form Data Pegawai</span>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('pegawai.store') }}" method="POST">
-                @csrf
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px">
-                    <div class="form-group" style="grid-column:1/-1">
-                        <label class="form-label">Nama Lengkap <span style="color:#dc2626">*</span></label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name') }}"
-                            placeholder="Nama lengkap sesuai KTP" required>
-                        @error('name')<div style="color:#dc2626;font-size:12px;margin-top:4px">{{ $message }}</div>@enderror
+<div style="max-width:900px">
+    <form action="{{ route('pegawai.store') }}" method="POST">
+        @csrf
+        
+        {{-- Section 1: Informasi Pribadi --}}
+        <div class="card" style="border:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border-radius:16px;margin-bottom:24px">
+            <div class="card-header" style="background:transparent;padding:20px 24px;border-bottom:1px solid var(--gray-100)">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#f0f9ff;color:#0369a1;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-person-badge" style="font-size:18px"></i>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">NIP <span style="color:#dc2626">*</span></label>
-                        <input type="text" name="nip" class="form-control" value="{{ old('nip') }}"
-                            placeholder="Nomor Induk Pegawai" required>
-                        @error('nip')<div style="color:#dc2626;font-size:12px;margin-top:4px">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">No. HP</label>
-                        <input type="text" name="no_hp" class="form-control" value="{{ old('no_hp') }}"
-                            placeholder="08xx-xxxx-xxxx">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Jabatan</label>
-                        <input type="text" name="jabatan" class="form-control" value="{{ old('jabatan') }}"
-                            placeholder="Dokter, Perawat, Bidan, dll">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Pangkat / Golongan</label>
-                        <input type="text" name="pangkat_gol" class="form-control" value="{{ old('pangkat_gol') }}"
-                            placeholder="Contoh: Penata Muda / III-a">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Unit / Departemen</label>
-                        <input type="text" name="unit" class="form-control" value="{{ old('unit') }}"
-                            placeholder="IGD, Poli Umum, Rawat Inap, dll">
-                    </div>
-                    <div class="form-group" style="grid-column:1/-1">
-                        <label class="form-label">Email <span style="color:#dc2626">*</span></label>
-                        <div class="input-group">
-                            <i class="bi bi-envelope input-icon"></i>
-                            <input type="email" name="email" class="form-control" value="{{ old('email') }}"
-                                placeholder="nama@rsud-baubau.go.id" required>
-                        </div>
-                        @error('email')<div style="color:#dc2626;font-size:12px;margin-top:4px">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Password <span style="color:#dc2626">*</span></label>
-                        <div class="input-group">
-                            <i class="bi bi-lock input-icon"></i>
-                            <input type="password" name="password" class="form-control"
-                                placeholder="Min. 6 karakter" required>
-                        </div>
-                        @error('password')<div style="color:#dc2626;font-size:12px;margin-top:4px">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Konfirmasi Password <span style="color:#dc2626">*</span></label>
-                        <div class="input-group">
-                            <i class="bi bi-lock-fill input-icon"></i>
-                            <input type="password" name="password_confirmation" class="form-control"
-                                placeholder="Ulangi password" required>
-                        </div>
+                    <div>
+                        <div style="font-weight:700;font-size:16px;color:var(--gray-900)">Informasi Pribadi</div>
+                        <div style="font-size:12px;color:var(--gray-400)">Data identitas dasar pegawai</div>
                     </div>
                 </div>
-                <div style="display:flex;gap:10px;margin-top:8px">
-                    <button type="submit" class="btn btn-primary" style="padding:10px 24px">
-                        <i class="bi bi-save"></i> Simpan Pegawai
-                    </button>
-                    <a href="{{ route('pegawai.index') }}" class="btn btn-outline" style="padding:10px 20px">Batal</a>
+            </div>
+            <div class="card-body" style="padding:24px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Nama Lengkap <span style="color:#dc2626">*</span></label>
+                        <input type="text" name="name" class="form-control" value="{{ old('name') }}" 
+                            placeholder="Masukkan nama lengkap sesuai KTP" required
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                        @error('name')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">NIK <span style="color:#dc2626">*</span></label>
+                        <input type="text" name="nik" class="form-control" value="{{ old('nik') }}" 
+                            placeholder="16 Digit Nomor Induk Kependudukan" required
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                        @error('nik')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">No. WhatsApp / HP</label>
+                        <input type="text" name="no_hp" class="form-control" value="{{ old('no_hp') }}" 
+                            placeholder="Contoh: 08123456789"
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                        @error('no_hp')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        {{-- Section 2: Detail Kepegawaian --}}
+        <div class="card" style="border:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border-radius:16px;margin-bottom:24px">
+            <div class="card-header" style="background:transparent;padding:20px 24px;border-bottom:1px solid var(--gray-100)">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#f0fdf4;color:#16a34a;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-briefcase" style="font-size:18px"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:16px;color:var(--gray-900)">Detail Kepegawaian</div>
+                        <div style="font-size:12px;color:var(--gray-400)">Instansi dan jabatan resmi</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="padding:24px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">NIP (Opsional)</label>
+                        <input type="text" name="nip" class="form-control" value="{{ old('nip') }}" 
+                            placeholder="Nomor Induk Pegawai (PNS)"
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                        @error('nip')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Unit / Departemen</label>
+                        <select name="unit" class="form-control form-select" style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200);height:auto">
+                            <option value="">-- Pilih Departemen --</option>
+                            @foreach(\App\Models\Department::all() as $dept)
+                                <option value="{{ $dept->nama }}" {{ old('unit') == $dept->nama ? 'selected' : '' }}>
+                                    {{ $dept->nama }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('unit')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Jabatan</label>
+                        <input type="text" name="jabatan" class="form-control" value="{{ old('jabatan') }}" 
+                            placeholder="Contoh: Perawat Ahli Muda"
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Pangkat / Golongan</label>
+                        <input type="text" name="pangkat_gol" class="form-control" value="{{ old('pangkat_gol') }}" 
+                            placeholder="Contoh: Penata / III-c"
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Section 3: Akun Sistem --}}
+        <div class="card" style="border:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border-radius:16px;margin-bottom:32px">
+            <div class="card-header" style="background:transparent;padding:20px 24px;border-bottom:1px solid var(--gray-100)">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#faf5ff;color:#9333ea;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-shield-lock" style="font-size:18px"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:16px;color:var(--gray-900)">Akun Sistem</div>
+                        <div style="font-size:12px;color:var(--gray-400)">Kredensial untuk akses aplikasi</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="padding:24px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Alamat Email <span style="color:#dc2626">*</span></label>
+                        <input type="email" name="email" class="form-control" value="{{ old('email') }}" 
+                            placeholder="Masukkan alamat email aktif" required
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                        @error('email')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Password <span style="color:#dc2626">*</span></label>
+                        <input type="password" name="password" class="form-control" required
+                            placeholder="Minimal 8 karakter"
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                        @error('password')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Konfirmasi Password <span style="color:#dc2626">*</span></label>
+                        <input type="password" name="password_confirmation" class="form-control" required
+                            placeholder="Ulangi password di atas"
+                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:40px">
+            <button type="submit" class="btn btn-primary" style="padding:14px 32px;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 10px 15px -3px rgba(37,99,235,0.2)">
+                <i class="bi bi-check-circle-fill me-2"></i> Daftarkan Pegawai
+            </button>
+            <a href="{{ route('pegawai.index') }}" class="btn" style="padding:14px 24px;border-radius:12px;background:var(--gray-100);color:var(--gray-600);font-weight:600;text-decoration:none">
+                Batal
+            </a>
+        </div>
+    </form>
 </div>
 @endsection

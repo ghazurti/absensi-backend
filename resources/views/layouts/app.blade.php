@@ -369,19 +369,35 @@
         .input-group .form-control { padding-left: 38px; }
 
         /* ===== PAGINATION ===== */
-        .pagination { display: flex; gap: 4px; align-items: center; }
-        .page-link {
-            padding: 6px 12px;
-            border-radius: 7px;
+        .pagination { 
+            display: flex; 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+            gap: 6px; 
+            justify-content: center;
+        }
+        .page-item .page-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
             font-size: 13px;
+            font-weight: 600;
             color: var(--gray-700);
             text-decoration: none;
             border: 1px solid var(--gray-200);
             background: #fff;
-            transition: all .15s;
+            transition: all .2s;
         }
-        .page-link:hover { background: var(--gray-100); }
-        .page-link.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .page-item .page-link:hover { background: var(--gray-100); border-color: var(--gray-300); transform: translateY(-1px); }
+        .page-item.active .page-link { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 10px rgba(57,73,171,.3); }
+        .page-item.disabled .page-link { opacity: .5; cursor: not-allowed; background: var(--gray-50); }
+        .page-item:first-child .page-link, .page-item:last-child .page-link { width: auto; padding: 0 16px; }
+
+        .pagination-info { font-size: 13px; color: var(--gray-500); text-align: center; margin-top: 12px; }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
@@ -421,6 +437,7 @@
             </a>
         </div>
 
+        @if(!auth()->user()->isAdmin())
         <div class="nav-section">Kehadiran</div>
 
         <div class="nav-item">
@@ -441,6 +458,9 @@
                 <a href="{{ route('shift.index') }}" class="sub-link {{ request()->routeIs('shift.index') ? 'active' : '' }}">
                     Daftar Shift
                 </a>
+                <a href="{{ route('tukar_shift.index') }}" class="sub-link {{ request()->routeIs('tukar_shift.*') ? 'active' : '' }}">
+                    Tukar Shift
+                </a>
             </div>
         </div>
 
@@ -458,22 +478,72 @@
             </div>
         </div>
 
+        <div class="nav-item">
+            <a href="{{ route('lembur.index') }}" class="nav-link {{ request()->routeIs('lembur.*') ? 'active' : '' }}">
+                <i class="bi bi-alarm"></i>
+                Pengajuan Lembur
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('koreksi.index') }}" class="nav-link {{ request()->routeIs('koreksi.*') ? 'active' : '' }}">
+                <i class="bi bi-pencil-square"></i>
+                Koreksi Absensi
+            </a>
+        </div>
+        @endif
+
         @if(auth()->user()->isAdmin())
         <div class="nav-section">Manajemen</div>
 
         <div class="nav-item">
-            <button class="nav-link {{ request()->routeIs('pegawai.*') ? 'active open' : '' }}"
-                onclick="toggleMenu('menu-pegawai', this)">
+            <a href="{{ route('pegawai.index') }}" class="nav-link {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-people"></i>
-                Pegawai
+                Daftar Pegawai
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('izin.index') }}" class="nav-link {{ request()->routeIs('izin.*') ? 'active' : '' }}">
+                <i class="bi bi-check2-square"></i>
+                Persetujuan Cuti
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('lembur.index') }}" class="nav-link {{ request()->routeIs('lembur.*') ? 'active' : '' }}">
+                <i class="bi bi-alarm-fill"></i>
+                Persetujuan Lembur
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('libur.index') }}" class="nav-link {{ request()->routeIs('libur.*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-event"></i>
+                Hari Libur
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <a href="{{ route('koreksi.index') }}" class="nav-link {{ request()->routeIs('koreksi.*') ? 'active' : '' }}">
+                <i class="bi bi-pencil-square"></i>
+                Persetujuan Koreksi
+            </a>
+        </div>
+
+        <div class="nav-item">
+            <button class="nav-link {{ request()->routeIs('departemen.*') ? 'active open' : '' }}"
+                onclick="toggleMenu('menu-departemen', this)">
+                <i class="bi bi-building"></i>
+                Departemen
                 <i class="bi bi-chevron-down nav-arrow"></i>
             </button>
-            <div class="sub-menu {{ request()->routeIs('pegawai.*') ? 'show' : '' }}" id="menu-pegawai">
-                <a href="{{ route('pegawai.index') }}" class="sub-link {{ request()->routeIs('pegawai.index') ? 'active' : '' }}">
-                    Daftar Pegawai
+            <div class="sub-menu {{ request()->routeIs('departemen.*') ? 'show' : '' }}" id="menu-departemen">
+                <a href="{{ route('departemen.index') }}" class="sub-link {{ request()->routeIs('departemen.index') ? 'active' : '' }}">
+                    Daftar Departemen
                 </a>
-                <a href="{{ route('pegawai.create') }}" class="sub-link {{ request()->routeIs('pegawai.create') ? 'active' : '' }}">
-                    Tambah Pegawai
+                <a href="{{ route('departemen.create') }}" class="sub-link {{ request()->routeIs('departemen.create') ? 'active' : '' }}">
+                    Tambah Departemen
                 </a>
             </div>
         </div>
@@ -489,7 +559,10 @@
             </button>
             <div class="sub-menu {{ request()->routeIs('laporan.*') || request()->routeIs('skor.*') ? 'show' : '' }}" id="menu-laporan">
                 <a href="{{ route('laporan.index') }}" class="sub-link {{ request()->routeIs('laporan.index') || request()->routeIs('laporan.export') ? 'active' : '' }}">
-                    Laporan Absensi
+                    Detail Absensi
+                </a>
+                <a href="{{ route('laporan.rekap') }}" class="sub-link {{ request()->routeIs('laporan.rekap') ? 'active' : '' }}">
+                    Rekapitulasi Bulanan
                 </a>
                 <a href="{{ route('skor.index') }}" class="sub-link {{ request()->routeIs('skor.*') ? 'active' : '' }}">
                     Skor Kehadiran

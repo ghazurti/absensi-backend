@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Protected routes
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:api')->name('api.')->group(function () {
 
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);

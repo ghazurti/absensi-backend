@@ -1,25 +1,60 @@
-FROM php:8.2-cli
+# Multi-stage build for assets
+FROM node:18-alpine AS assets-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpq-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring xml \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Main PHP stage
+FROM php:8.2-fpm-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    nginx \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    zip \
+    libzip-dev \
+    unzip \
+    oniguruma-dev \
+    icu-dev
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring gd zip intl bcmath
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+WORKDIR /var/www/html
 
-# Copy composer files first for caching
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-scripts
-
-# Copy rest of app
+# Copy application files
 COPY . .
+COPY --from=assets-builder /app/public/build ./public/build
 
-RUN php artisan storage:link || true
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-EXPOSE 8000
+# Setup Permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-CMD php artisan migrate --force && php artisan db:seed --force 2>/dev/null || true && php artisan serve --host=0.0.0.0 --port=8000
+# Copy Nginx config
+COPY ./docker/nginx.conf /etc/nginx/http.d/default.conf
+
+# Set environment for production
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+
+EXPOSE 8080
+
+# Start script
+RUN echo "#!/bin/sh" > /usr/local/bin/start.sh && \
+    echo "php artisan config:cache" >> /usr/local/bin/start.sh && \
+    echo "php artisan route:cache" >> /usr/local/bin/start.sh && \
+    echo "php artisan view:cache" >> /usr/local/bin/start.sh && \
+    echo "nginx && php-fpm" >> /usr/local/bin/start.sh && \
+    chmod +x /usr/local/bin/start.sh
+
+CMD ["/usr/local/bin/start.sh"]

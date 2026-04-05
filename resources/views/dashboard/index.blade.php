@@ -85,14 +85,14 @@
 
 {{-- Stat Cards --}}
 <div class="stat-grid">
-    <div class="stat-card">
+    <a href="{{ route('pegawai.index') }}" class="stat-card" style="text-decoration:none;transition:transform .2s" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
         <div>
             <div class="sc-label">Total Pegawai</div>
             <div class="sc-val">{{ $data['total_pegawai'] }}</div>
-            <div class="sc-sub up"><i class="bi bi-arrow-up-short"></i> Terdaftar aktif</div>
+            <div class="sc-sub up"><i class="bi bi-arrow-right-short"></i> Lihat semua pegawai</div>
         </div>
         <div class="sc-icon icon-blue"><i class="bi bi-people-fill"></i></div>
-    </div>
+    </a>
     <div class="stat-card">
         <div>
             <div class="sc-label">Hadir Hari Ini</div>

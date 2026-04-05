@@ -4,17 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Izin extends Model
+class KoreksiAbsensi extends Model
 {
-    protected $table = 'izins';
-
     protected $fillable = [
         'user_id',
-        'tanggal_mulai',
-        'tanggal_selesai',
-        'jenis',
-        'keterangan',
-        'file_pendukung',
+        'tanggal',
+        'jam_masuk',
+        'jam_keluar',
+        'alasan',
         'status',
         'catatan_admin',
     ];
@@ -22,8 +19,7 @@ class Izin extends Model
     protected function casts(): array
     {
         return [
-            'tanggal_mulai' => 'date',
-            'tanggal_selesai' => 'date',
+            'tanggal' => 'date',
         ];
     }
 

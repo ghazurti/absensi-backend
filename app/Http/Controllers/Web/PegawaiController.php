@@ -15,6 +15,7 @@ class PegawaiController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('nik', 'like', '%' . $request->search . '%')
                   ->orWhere('nip', 'like', '%' . $request->search . '%')
                   ->orWhere('unit', 'like', '%' . $request->search . '%');
             });
@@ -25,7 +26,8 @@ class PegawaiController extends Controller
 
     public function create()
     {
-        return view('pegawai.create');
+        $departments = \App\Models\Department::orderBy('nama')->get();
+        return view('pegawai.create', compact('departments'));
     }
 
     public function store(Request $request)
@@ -33,7 +35,8 @@ class PegawaiController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'nip' => 'required|string|unique:users',
+            'nik' => 'required|string|unique:users',
+            'nip' => 'nullable|string|unique:users',
             'no_hp' => 'nullable|string|max:20',
             'jabatan' => 'nullable|string|max:100',
             'pangkat_gol' => 'nullable|string|max:100',
@@ -44,6 +47,7 @@ class PegawaiController extends Controller
         User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'nik' => $request->nik,
             'nip' => $request->nip,
             'no_hp' => $request->no_hp,
             'jabatan' => $request->jabatan,
@@ -58,7 +62,8 @@ class PegawaiController extends Controller
 
     public function edit(User $pegawai)
     {
-        return view('pegawai.edit', compact('pegawai'));
+        $departments = \App\Models\Department::orderBy('nama')->get();
+        return view('pegawai.edit', compact('pegawai', 'departments'));
     }
 
     public function update(Request $request, User $pegawai)
@@ -66,14 +71,15 @@ class PegawaiController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $pegawai->id,
-            'nip' => 'required|string|unique:users,nip,' . $pegawai->id,
+            'nik' => 'required|string|unique:users,nik,' . $pegawai->id,
+            'nip' => 'nullable|string|unique:users,nip,' . $pegawai->id,
             'no_hp' => 'nullable|string|max:20',
             'jabatan' => 'nullable|string|max:100',
             'pangkat_gol' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:100',
         ]);
 
-        $data = $request->only(['name', 'email', 'nip', 'no_hp', 'jabatan', 'pangkat_gol', 'unit']);
+        $data = $request->only(['name', 'email', 'nik', 'nip', 'no_hp', 'jabatan', 'pangkat_gol', 'unit']);
 
         if ($request->filled('password')) {
             $request->validate(['password' => 'min:6|confirmed']);

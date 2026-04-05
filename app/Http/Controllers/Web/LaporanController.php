@@ -79,4 +79,67 @@ class LaporanController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+    public function rekap(Request $request)
+    {
+        $bulan = $request->get('bulan', Carbon::now()->month);
+        $tahun = $request->get('tahun', Carbon::now()->year);
+
+        $users = User::where('role', 'pegawai')
+            ->with(['absensis' => function ($q) use ($bulan, $tahun) {
+                $q->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun);
+            }])
+            ->orderBy('name')
+            ->get();
+
+        return view('laporan.rekap', compact('users', 'bulan', 'tahun'));
+    }
+
+    public function exportRekap(Request $request)
+    {
+        $bulan = $request->get('bulan', Carbon::now()->month);
+        $tahun = $request->get('tahun', Carbon::now()->year);
+
+        $users = User::where('role', 'pegawai')
+            ->with(['absensis' => function ($q) use ($bulan, $tahun) {
+                $q->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun);
+            }])
+            ->orderBy('name')
+            ->get();
+
+        $filename = "rekapitulasi-absensi-{$bulan}-{$tahun}.csv";
+        header("Content-Type: text/csv");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+
+        $output = fopen("php://output", "w");
+        fputcsv($output, ['No', 'Nama Pegawai', 'NIP', 'Unit', 'Hadir', 'Terlambat', 'Izin/Sakit', 'Alpha', 'Total Lembur (Jam)']);
+
+        foreach ($users as $i => $u) {
+            $stats = $u->absensis->groupBy('status');
+            $hadir = ($stats['hadir'] ?? collect())->count();
+            $telat = ($stats['terlambat'] ?? collect())->count();
+            $izin = ($stats['izin'] ?? collect())->count() + ($stats['sakit'] ?? collect())->count();
+            $alpha = ($stats['alpha'] ?? collect())->count();
+            
+            // Total Lembur (Asumsi kita hitung record lembur atau durasi)
+            $totalLembur = \App\Models\Lembur::where('user_id', $u->id)
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun)
+                ->where('status', 'approved')
+                ->count(); // Sederhana: hitung berapa kali lembur
+
+            fputcsv($output, [
+                $i + 1,
+                $u->name,
+                $u->nip ?? '-',
+                $u->unit ?? '-',
+                $hadir,
+                $telat,
+                $izin,
+                $alpha,
+                $totalLembur
+            ]);
+        }
+        fclose($output);
+        exit;
+    }
 }

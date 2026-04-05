@@ -7,7 +7,11 @@
     .page-title { font-size: 22px; font-weight: 800; color: var(--gray-900); margin-bottom: 4px; }
     .page-sub { font-size: 13px; color: var(--gray-400); margin-bottom: 24px; }
 
-    .absensi-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+    .absensi-grid { 
+        display: grid; 
+        grid-template-columns: {{ auth()->user()->isAdmin() ? '1fr' : '380px 1fr' }}; 
+        gap: 20px; 
+    }
 
     /* Camera & GPS */
     #cam-container { background: #000; border-radius: 10px; overflow: hidden; margin-bottom: 12px; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; }
@@ -36,6 +40,7 @@
 <div class="absensi-grid">
 
     {{-- KIRI: Panel Absensi --}}
+    @if(!auth()->user()->isAdmin())
     <div>
         <div class="card">
             <div class="card-header">
@@ -132,6 +137,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     {{-- KANAN: Riwayat --}}
     <div class="card">
@@ -207,6 +213,7 @@
 @endsection
 
 @push('scripts')
+@if(!auth()->user()->isAdmin())
 <script>
 let stream = null, capturedBlob = null, gpsLat = null, gpsLng = null;
 
@@ -300,4 +307,5 @@ function hitungJarak(lat1,lon1,lat2,lon2) {
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 </script>
+@endif
 @endpush

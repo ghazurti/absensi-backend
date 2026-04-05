@@ -42,7 +42,29 @@ class IzinController extends Controller
     {
         $user = auth()->user();
         if (!$user->isAdmin() && $izin->user_id !== $user->id) abort(403);
+        
+        // Cegah penghapusan jika sudah disetujui/ditolak (untuk pegawai)
+        if (!$user->isAdmin() && $izin->status !== 'pending') {
+            return back()->with('error', 'Tidak dapat menghapus pengajuan yang sudah diproses.');
+        }
+
         $izin->delete();
         return back()->with('success', 'Data izin berhasil dihapus.');
+    }
+
+    public function approve(Izin $izin)
+    {
+        $izin->update(['status' => 'approved']);
+        return back()->with('success', 'Pengajuan izin berhasil disetujui.');
+    }
+
+    public function reject(Request $request, Izin $izin)
+    {
+        $request->validate(['catatan_admin' => 'nullable|string|max:255']);
+        $izin->update([
+            'status' => 'rejected',
+            'catatan_admin' => $request->catatan_admin
+        ]);
+        return back()->with('success', 'Pengajuan izin berhasil ditolak.');
     }
 }
