@@ -1,0 +1,48 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('absensis', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('shift_id')->nullable()->constrained('shifts')->onDelete('set null');
+            $table->date('tanggal');
+            $table->dateTime('check_in')->nullable();
+            $table->dateTime('check_out')->nullable();
+            $table->string('foto_check_in')->nullable();
+            $table->string('foto_check_out')->nullable();
+            $table->decimal('latitude_in', 10, 8)->nullable();
+            $table->decimal('longitude_in', 11, 8)->nullable();
+            $table->decimal('latitude_out', 10, 8)->nullable();
+            $table->decimal('longitude_out', 11, 8)->nullable();
+            $table->enum('status', ['hadir', 'terlambat', 'izin', 'sakit', 'alpha'])->default('hadir');
+            $table->text('keterangan')->nullable();
+            $table->timestamps();
+
+            $table->unique(['user_id', 'tanggal']);
+        });
+
+        Schema::create('izins', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->date('tanggal_mulai');
+            $table->date('tanggal_selesai');
+            $table->enum('jenis', ['izin', 'sakit', 'cuti']);
+            $table->text('keterangan');
+            $table->string('file_pendukung')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('absensis');
+        Schema::dropIfExists('izins');
+    }
+};

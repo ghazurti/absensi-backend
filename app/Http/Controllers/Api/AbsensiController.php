@@ -1,0 +1,168 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Absensi;
+use App\Models\Shift;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+class AbsensiController extends Controller
+{
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+        $query = Absensi::with('user', 'shift');
+
+        if (!$user->isAdmin()) {
+            $query->where('user_id', $user->id);
+        }
+
+        if ($request->filled('bulan') && $request->filled('tahun')) {
+            $query->whereMonth('tanggal', $request->bulan)
+                  ->whereYear('tanggal', $request->tahun);
+        }
+
+        if ($request->filled('user_id') && $user->isAdmin()) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return response()->json($query->orderBy('tanggal', 'desc')->get());
+    }
+
+    public function checkIn(Request $request)
+    {
+        $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'foto' => 'required|image|max:3072',
+            'shift_id' => 'nullable|exists:shifts,id',
+        ]);
+
+        $user = auth()->user();
+        $today = Carbon::today()->toDateString();
+
+        $existing = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
+
+        if ($existing && $existing->check_in) {
+            return response()->json(['message' => 'Anda sudah melakukan check-in hari ini'], 422);
+        }
+
+        // Cek jarak dari RSUD (koordinat bisa disesuaikan)
+        $rsudLat = -5.4677;
+        $rsudLng = 122.6307;
+        $jarak = $this->hitungJarak($request->latitude, $request->longitude, $rsudLat, $rsudLng);
+
+        if ($jarak > 200) { // radius 200 meter
+            return response()->json([
+                'message' => 'Anda berada di luar area RSUD. Jarak: ' . round($jarak) . ' meter'
+            ], 422);
+        }
+
+        $fotoPath = $request->file('foto')->store('foto-absensi', 'public');
+
+        // Tentukan status (terlambat jika > jam masuk shift)
+        $status = 'hadir';
+        if ($request->filled('shift_id')) {
+            $shift = Shift::find($request->shift_id);
+            if ($shift) {
+                $jamMasuk = Carbon::parse($today . ' ' . $shift->jam_masuk);
+                if (Carbon::now()->gt($jamMasuk->addMinutes(15))) {
+                    $status = 'terlambat';
+                }
+            }
+        }
+
+        $absensi = Absensi::updateOrCreate(
+            ['user_id' => $user->id, 'tanggal' => $today],
+            [
+                'shift_id' => $request->shift_id,
+                'check_in' => Carbon::now(),
+                'foto_check_in' => $fotoPath,
+                'latitude_in' => $request->latitude,
+                'longitude_in' => $request->longitude,
+                'status' => $status,
+            ]
+        );
+
+        return response()->json(['message' => 'Check-in berhasil', 'absensi' => $absensi], 201);
+    }
+
+    public function checkOut(Request $request)
+    {
+        $request->validate([
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'foto' => 'required|image|max:3072',
+        ]);
+
+        $user = auth()->user();
+        $today = Carbon::today()->toDateString();
+
+        $absensi = Absensi::where('user_id', $user->id)
+            ->where('tanggal', $today)
+            ->first();
+
+        if (!$absensi || !$absensi->check_in) {
+            return response()->json(['message' => 'Anda belum melakukan check-in hari ini'], 422);
+        }
+
+        if ($absensi->check_out) {
+            return response()->json(['message' => 'Anda sudah melakukan check-out hari ini'], 422);
+        }
+
+        $fotoPath = $request->file('foto')->store('foto-absensi', 'public');
+
+        $absensi->update([
+            'check_out' => Carbon::now(),
+            'foto_check_out' => $fotoPath,
+            'latitude_out' => $request->latitude,
+            'longitude_out' => $request->longitude,
+        ]);
+
+        return response()->json(['message' => 'Check-out berhasil', 'absensi' => $absensi]);
+    }
+
+    public function rekap(Request $request)
+    {
+        $user = auth()->user();
+        $bulan = $request->get('bulan', Carbon::now()->month);
+        $tahun = $request->get('tahun', Carbon::now()->year);
+        $userId = $user->isAdmin() ? ($request->get('user_id', $user->id)) : $user->id;
+
+        $absensis = Absensi::where('user_id', $userId)
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->get();
+
+        $rekap = [
+            'hadir' => $absensis->where('status', 'hadir')->count(),
+            'terlambat' => $absensis->where('status', 'terlambat')->count(),
+            'izin' => $absensis->where('status', 'izin')->count(),
+            'sakit' => $absensis->where('status', 'sakit')->count(),
+            'alpha' => $absensis->where('status', 'alpha')->count(),
+            'total' => $absensis->count(),
+        ];
+
+        return response()->json(['rekap' => $rekap, 'detail' => $absensis]);
+    }
+
+    private function hitungJarak($lat1, $lon1, $lat2, $lon2)
+    {
+        $r = 6371000; // radius bumi dalam meter
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $r * $c;
+    }
+}
