@@ -25,6 +25,12 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Profil
+    Route::get('/profil', [AuthController::class, 'profil'])->name('profil');
+    Route::post('/profil', [AuthController::class, 'updateProfil'])->name('profil.update');
+    Route::get('/profil/ganti-password', [AuthController::class, 'gantiPassword'])->name('profil.ganti-password');
+    Route::post('/profil/ganti-password', [AuthController::class, 'updatePassword'])->name('profil.update-password');
+
     // Absensi
     Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     Route::post('/absensi/check-in', [AbsensiController::class, 'checkIn'])->name('absensi.checkin');
@@ -58,9 +64,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/laporan/rekap', [LaporanController::class, 'rekap'])->name('laporan.rekap');
         Route::get('/laporan/rekap/export', [LaporanController::class, 'exportRekap'])->name('laporan.export_rekap');
 
-        // Skor Kehadiran
-        Route::get('/laporan/skor', [SkorController::class, 'index'])->name('skor.index');
-        Route::get('/laporan/skor/cetak', [SkorController::class, 'cetak'])->name('skor.cetak');
 
         // Persetujuan Izin/Cuti
         Route::post('/izin/{izin}/approve', [IzinController::class, 'approve'])->name('izin.approve');
@@ -77,6 +80,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/koreksi/{koreksi}/approve', [\App\Http\Controllers\Web\KoreksiAbsensiController::class, 'approve'])->name('koreksi.approve');
         Route::post('/koreksi/{koreksi}/reject', [\App\Http\Controllers\Web\KoreksiAbsensiController::class, 'reject'])->name('koreksi.reject');
     });
+
+    // Skor Kehadiran (Pegawai & Admin)
+    Route::get('/laporan/skor', [SkorController::class, 'index'])->name('skor.index');
+    Route::get('/laporan/skor/cetak', [SkorController::class, 'cetak'])->name('skor.cetak');
+    Route::get('/laporan/skor/export', [SkorController::class, 'exportExcel'])->name('skor.export');
 
     // Lembur (Pegawai & Admin)
     Route::resource('/lembur', \App\Http\Controllers\Web\LemburController::class)->only(['index', 'store', 'destroy']);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -18,11 +19,23 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        $key = 'login:' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            return response()->json([
+                'message' => "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik."
+            ], 429);
+        }
+
         $credentials = $request->only('email', 'password');
 
         if (!$token = JWTAuth::attempt($credentials)) {
+            RateLimiter::hit($key, 60); // blokir 60 detik setelah 5 gagal
             return response()->json(['message' => 'Email atau password salah'], 401);
         }
+
+        RateLimiter::clear($key);
 
         return $this->respondWithToken($token);
     }
@@ -49,11 +62,12 @@ class AuthController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'no_hp' => 'sometimes|string|max:20',
-            'foto' => 'sometimes|image|max:2048',
+            'foto' => 'sometimes|image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
-        $data = $request->only(['name', 'no_hp']);
+        $data = $request->only(['name', 'email', 'no_hp']);
 
         if ($request->hasFile('foto')) {
             $path = $request->file('foto')->store('foto-profil', 'public');
@@ -61,13 +75,21 @@ class AuthController extends Controller
         }
 
         if ($request->filled('password')) {
-            $request->validate(['password' => 'min:6|confirmed']);
+            $request->validate([
+                'password_lama' => 'required',
+                'password' => 'required|min:8|confirmed',
+            ]);
+
+            if (!Hash::check($request->password_lama, $user->password)) {
+                return response()->json(['message' => 'Password lama tidak sesuai'], 422);
+            }
+
             $data['password'] = Hash::make($request->password);
         }
 
         $user->update($data);
 
-        return response()->json(['message' => 'Profil berhasil diupdate', 'user' => $user]);
+        return response()->json(['message' => 'Profil berhasil diupdate', 'user' => $user->fresh()]);
     }
 
     protected function respondWithToken($token)

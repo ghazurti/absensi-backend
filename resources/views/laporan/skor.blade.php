@@ -77,18 +77,33 @@
         <div style="font-size:22px;font-weight:800;color:var(--gray-900)">Skor Kehadiran Pegawai</div>
         <div style="font-size:13px;color:var(--gray-400);margin-top:3px">Lembar Perhitungan Skor Kehadiran — Dinas Kesehatan</div>
     </div>
-    @if($pegawai && $skor)
-    <a href="{{ route('skor.cetak', ['user_id'=>$pegawai->id,'bulan'=>$bulan,'tahun'=>$tahun]) }}"
-        target="_blank" class="btn btn-primary">
-        <i class="bi bi-printer"></i> Cetak / PDF
-    </a>
-    @endif
+    <div style="display:flex;gap:8px">
+        @if($pegawai && $skor)
+        <a href="{{ route('skor.cetak', ['user_id'=>$pegawai->id,'bulan'=>$bulan,'tahun'=>$tahun]) }}"
+            target="_blank" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Cetak / PDF
+        </a>
+        @endif
+        <a href="{{ route('skor.export', ['bulan'=>$bulan,'tahun'=>$tahun,'unit'=>$unit]) }}"
+            class="btn" style="background:#16a34a;color:#fff;display:flex;align-items:center;gap:6px">
+            <i class="bi bi-file-earmark-excel"></i> Export Excel
+        </a>
+    </div>
 </div>
 
 {{-- Filter --}}
 <div class="card" style="margin-bottom:20px">
     <div class="card-body" style="padding:16px 20px">
         <form style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+            <div>
+                <label class="form-label" style="font-size:12px">Unit</label>
+                <select name="unit" class="form-control form-select" style="min-width:180px">
+                    <option value="">-- Semua Unit --</option>
+                    @foreach($units as $u)
+                    <option value="{{ $u }}" {{ $unit == $u ? 'selected' : '' }}>{{ $u }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div>
                 <label class="form-label" style="font-size:12px">Pegawai</label>
                 <select name="user_id" class="form-control form-select" style="min-width:220px">

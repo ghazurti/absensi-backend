@@ -12,6 +12,13 @@ class AbsensiController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate([
+            'bulan' => 'nullable|integer|min:1|max:12',
+            'tahun' => 'nullable|integer|min:2000|max:2100',
+            'user_id' => 'nullable|integer|exists:users,id',
+            'status' => 'nullable|in:hadir,terlambat,izin,sakit,alpha',
+        ]);
+
         $user = auth()->user();
         $query = Absensi::with('user', 'shift');
 
@@ -133,6 +140,12 @@ class AbsensiController extends Controller
 
     public function rekap(Request $request)
     {
+        $request->validate([
+            'bulan' => 'nullable|integer|min:1|max:12',
+            'tahun' => 'nullable|integer|min:2000|max:2100',
+            'user_id' => 'nullable|integer|exists:users,id',
+        ]);
+
         $user = auth()->user();
         $bulan = $request->get('bulan', Carbon::now()->month);
         $tahun = $request->get('tahun', Carbon::now()->year);

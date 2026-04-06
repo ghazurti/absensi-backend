@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -35,5 +36,55 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('login');
+    }
+
+    public function profil()
+    {
+        return view('auth.profil', ['user' => auth()->user()]);
+    }
+
+    public function updateProfil(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'name'   => 'required|string|max:255',
+            'email'  => 'required|email|unique:users,email,' . $user->id,
+            'no_hp'  => 'nullable|string|max:20',
+            'foto'   => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+        ]);
+
+        $data = $request->only(['name', 'email', 'no_hp']);
+
+        if ($request->hasFile('foto')) {
+            $data['foto'] = $request->file('foto')->store('foto-profil', 'public');
+        }
+
+        $user->update($data);
+
+        return back()->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    public function gantiPassword()
+    {
+        return view('auth.ganti-password');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'password_lama' => 'required',
+            'password'      => 'required|min:8|confirmed',
+        ]);
+
+        if (!Hash::check($request->password_lama, $user->password)) {
+            return back()->withErrors(['password_lama' => 'Password lama tidak sesuai.']);
+        }
+
+        $user->update(['password' => Hash::make($request->password)]);
+
+        return back()->with('success', 'Password berhasil diubah.');
     }
 }

@@ -15,6 +15,7 @@ class LaporanController extends Controller
         $bulan = $request->get('bulan', Carbon::now()->month);
         $tahun = $request->get('tahun', Carbon::now()->year);
         $userId = $request->get('user_id');
+        $unit = $request->get('unit');
 
         $query = Absensi::with('user')
             ->whereMonth('tanggal', $bulan)
@@ -22,18 +23,29 @@ class LaporanController extends Controller
 
         if ($userId) $query->where('user_id', $userId);
 
+        if ($unit) {
+            $query->whereHas('user', fn($q) => $q->where('unit', $unit));
+        }
+
         $absensis = $query->orderBy('tanggal', 'desc')->paginate(20)->withQueryString();
 
-        $rekap = Absensi::whereMonth('tanggal', $bulan)
+        $rekapQuery = Absensi::whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->when($userId, fn($q) => $q->where('user_id', $userId))
-            ->selectRaw('status, count(*) as total')
+            ->when($unit, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('unit', $unit)));
+
+        $rekap = $rekapQuery->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        $pegawais = User::where('role', 'pegawai')->orderBy('name')->get();
+        $pegawais = User::where('role', 'pegawai')
+            ->when($unit, fn($q) => $q->where('unit', $unit))
+            ->orderBy('name')->get();
 
-        return view('laporan.index', compact('absensis', 'rekap', 'bulan', 'tahun', 'pegawais', 'userId'));
+        $units = User::where('role', 'pegawai')->whereNotNull('unit')
+            ->distinct()->orderBy('unit')->pluck('unit');
+
+        return view('laporan.index', compact('absensis', 'rekap', 'bulan', 'tahun', 'pegawais', 'userId', 'unit', 'units'));
     }
 
     public function export(Request $request)
@@ -41,11 +53,13 @@ class LaporanController extends Controller
         $bulan = $request->get('bulan', Carbon::now()->month);
         $tahun = $request->get('tahun', Carbon::now()->year);
         $userId = $request->get('user_id');
+        $unit = $request->get('unit');
 
         $absensis = Absensi::with('user')
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->when($userId, fn($q) => $q->where('user_id', $userId))
+            ->when($unit, fn($q) => $q->whereHas('user', fn($q2) => $q2->where('unit', $unit)))
             ->orderBy('tanggal')
             ->get();
 
@@ -83,27 +97,34 @@ class LaporanController extends Controller
     {
         $bulan = $request->get('bulan', Carbon::now()->month);
         $tahun = $request->get('tahun', Carbon::now()->year);
+        $unit = $request->get('unit');
 
         $users = User::where('role', 'pegawai')
+            ->when($unit, fn($q) => $q->where('unit', $unit))
             ->with(['absensis' => function ($q) use ($bulan, $tahun) {
                 $q->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun);
             }])
-            ->orderBy('name')
+            ->orderBy('unit')->orderBy('name')
             ->get();
 
-        return view('laporan.rekap', compact('users', 'bulan', 'tahun'));
+        $units = User::where('role', 'pegawai')->whereNotNull('unit')
+            ->distinct()->orderBy('unit')->pluck('unit');
+
+        return view('laporan.rekap', compact('users', 'bulan', 'tahun', 'unit', 'units'));
     }
 
     public function exportRekap(Request $request)
     {
         $bulan = $request->get('bulan', Carbon::now()->month);
         $tahun = $request->get('tahun', Carbon::now()->year);
+        $unit = $request->get('unit');
 
         $users = User::where('role', 'pegawai')
+            ->when($unit, fn($q) => $q->where('unit', $unit))
             ->with(['absensis' => function ($q) use ($bulan, $tahun) {
                 $q->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun);
             }])
-            ->orderBy('name')
+            ->orderBy('unit')->orderBy('name')
             ->get();
 
         $filename = "rekapitulasi-absensi-{$bulan}-{$tahun}.csv";

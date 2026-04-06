@@ -47,7 +47,7 @@ class PegawaiController extends Controller
         try {
             // Smart Defaults
             $email = $request->email ?: $request->nik . '@rsud-baubau.go.id';
-            $password = $request->password ?: 'rsud123';
+            $password = $request->password ?: $request->nik;
 
             User::create([
                 'name' => $request->name,
@@ -121,7 +121,7 @@ class PegawaiController extends Controller
                         'pangkat_gol' => trim($data[6]),
                         'unit' => trim($data[7]),
                         'role' => 'pegawai',
-                        'password' => Hash::make('rsud123'),
+                        'password' => Hash::make($nik),
                     ]
                 );
                 $count++;

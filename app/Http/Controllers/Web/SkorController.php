@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Exports\SkorExport;
 use App\Http\Controllers\Controller;
 use App\Models\Absensi;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SkorController extends Controller
 {
@@ -24,26 +26,57 @@ class SkorController extends Controller
 
     public function index(Request $request)
     {
-        $bulan   = $request->get('bulan', Carbon::now()->month);
-        $tahun   = $request->get('tahun', Carbon::now()->year);
-        $userId  = $request->get('user_id');
+        $authUser = auth()->user();
+        $bulan    = $request->get('bulan', Carbon::now()->month);
+        $tahun    = $request->get('tahun', Carbon::now()->year);
+        $unit     = $request->get('unit');
 
-        $pegawais = User::where('role', 'pegawai')->orderBy('name')->get();
-        $pegawai  = $userId ? User::find($userId) : null;
-        $skor     = $pegawai ? $this->hitungSkor($pegawai, $bulan, $tahun) : null;
+        if ($authUser->isAdmin()) {
+            $userId   = $request->get('user_id');
+            $pegawais = User::where('role', 'pegawai')
+                ->when($unit, fn($q) => $q->where('unit', $unit))
+                ->orderBy('name')->get();
+            $units   = User::where('role', 'pegawai')->whereNotNull('unit')
+                ->distinct()->orderBy('unit')->pluck('unit');
+            $pegawai = $userId ? User::find($userId) : null;
+        } else {
+            $pegawai  = $authUser;
+            $pegawais = collect([$pegawai]);
+            $units    = collect();
+        }
+
+        $skor = $pegawai ? $this->hitungSkor($pegawai, $bulan, $tahun) : null;
         $pejabatPenilai = User::where('role', 'admin')->first();
 
-        return view('laporan.skor', compact('pegawais', 'pegawai', 'skor', 'bulan', 'tahun', 'pejabatPenilai'));
+        return view('laporan.skor', compact('pegawais', 'pegawai', 'skor', 'bulan', 'tahun', 'pejabatPenilai', 'unit', 'units'));
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $bulan  = $request->get('bulan', Carbon::now()->month);
+        $tahun  = $request->get('tahun', Carbon::now()->year);
+        $unit   = $request->get('unit');
+
+        $namaBulan = Carbon::create($tahun, $bulan)->locale('id')->isoFormat('MMMM-YYYY');
+        $filename  = 'skor-kehadiran-' . ($unit ? strtolower(str_replace(' ', '-', $unit)) . '-' : '') . $namaBulan . '.xlsx';
+
+        return Excel::download(new SkorExport($bulan, $tahun, $unit), $filename);
     }
 
     public function cetak(Request $request)
     {
-        $bulan  = $request->get('bulan', Carbon::now()->month);
-        $tahun  = $request->get('tahun', Carbon::now()->year);
-        $userId = $request->get('user_id');
+        $authUser = auth()->user();
+        $bulan    = $request->get('bulan', Carbon::now()->month);
+        $tahun    = $request->get('tahun', Carbon::now()->year);
+        $userId   = $authUser->isAdmin() ? $request->get('user_id', $authUser->id) : $authUser->id;
 
         $pegawai = User::findOrFail($userId);
-        $skor    = $this->hitungSkor($pegawai, $bulan, $tahun);
+
+        if (!$authUser->isAdmin() && $pegawai->id !== $authUser->id) {
+            abort(403);
+        }
+
+        $skor = $this->hitungSkor($pegawai, $bulan, $tahun);
         $pejabatPenilai = User::where('role', 'admin')->first();
 
         return view('laporan.skor-cetak', compact('pegawai', 'skor', 'bulan', 'tahun', 'pejabatPenilai'));

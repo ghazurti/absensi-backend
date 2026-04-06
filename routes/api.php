@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\IzinController;
 use App\Http\Controllers\Api\PegawaiController;
 use App\Http\Controllers\Api\ShiftController;
+use App\Http\Controllers\Api\SkorController;
 use Illuminate\Support\Facades\Route;
 
 // Auth (public)
@@ -31,6 +32,9 @@ Route::middleware('auth:api')->name('api.')->group(function () {
     Route::post('/absensi/check-in', [AbsensiController::class, 'checkIn']);
     Route::post('/absensi/check-out', [AbsensiController::class, 'checkOut']);
     Route::get('/absensi/rekap', [AbsensiController::class, 'rekap']);
+
+    // Skor Kehadiran
+    Route::get('/skor', [SkorController::class, 'index']);
 
     // Izin
     Route::apiResource('izin', IzinController::class)->except(['update', 'edit', 'create']);

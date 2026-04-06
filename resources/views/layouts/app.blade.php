@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') — Absensi RSUD Kota Baubau</title>
+    <title>@yield('title', 'Dashboard') — Absensi BLUD RSUD KOTA BAUBAU</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -420,9 +420,9 @@
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <div class="sidebar-brand-icon">
-            <i class="bi bi-hospital-fill"></i>
-        </div>
+        <img src="{{ asset('images/logo-rsud-baubau.png') }}"
+             alt="Logo RSUD Baubau"
+             style="width:36px;height:36px;object-fit:contain;flex-shrink:0">
         <div>
             <div class="sidebar-brand-text">RSUD Baubau</div>
             <div class="sidebar-brand-sub">Sistem Absensi</div>
@@ -548,6 +548,14 @@
             </div>
         </div>
 
+        <div class="nav-section">Akun</div>
+        <div class="nav-item">
+            <a href="{{ route('profil') }}" class="nav-link {{ request()->routeIs('profil*') ? 'active' : '' }}">
+                <i class="bi bi-person-circle"></i>
+                Profil Saya
+            </a>
+        </div>
+
         <div class="nav-section">Laporan</div>
 
         <div class="nav-item">
@@ -585,8 +593,9 @@
 
     <div class="topbar-right">
         <div class="topbar-hospital">
-            <i class="bi bi-building-fill-cross"></i>
-            RSUD Kota Baubau
+            <img src="{{ asset('images/logo-rsud-baubau.png') }}"
+                 alt="Logo RSUD" style="width:20px;height:20px;object-fit:contain">
+            BLUD RSUD KOTA BAUBAU
         </div>
 
         <div class="topbar-notif">
@@ -607,6 +616,13 @@
                     <div style="font-size:13px;font-weight:600;color:var(--gray-900)">{{ auth()->user()->name }}</div>
                     <div style="font-size:12px;color:var(--gray-400)">{{ auth()->user()->email }}</div>
                 </div>
+                <a href="{{ route('profil') }}" class="dropdown-item">
+                    <i class="bi bi-person-circle"></i> Profil Saya
+                </a>
+                <a href="{{ route('profil.ganti-password') }}" class="dropdown-item">
+                    <i class="bi bi-shield-lock"></i> Ganti Password
+                </a>
+                <div class="dropdown-divider"></div>
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button type="submit" class="dropdown-item danger">
