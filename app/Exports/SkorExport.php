@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\User;
+use App\Models\Absensi;
 use App\Http\Controllers\Web\SkorController;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromArray;
@@ -36,9 +37,18 @@ class SkorExport implements FromArray, WithHeadings, WithTitle, WithStyles, With
             ->orderBy('unit')->orderBy('name')
             ->get();
 
+        // Eager load all absensis for relevant users in one query
+        $allAbsensis = Absensi::with('shift')
+            ->whereIn('user_id', $users->pluck('id'))
+            ->whereMonth('tanggal', $this->bulan)
+            ->whereYear('tanggal', $this->tahun)
+            ->get()
+            ->groupBy('user_id');
+
         $rows = [];
         foreach ($users as $i => $user) {
-            $skor = $skorController->hitungSkor($user, $this->bulan, $this->tahun);
+            $userAbsensis = $allAbsensis->get($user->id, collect());
+            $skor = $skorController->hitungSkor($user, $this->bulan, $this->tahun, $userAbsensis);
 
             $rows[] = [
                 $i + 1,
@@ -107,7 +117,6 @@ class SkorExport implements FromArray, WithHeadings, WithTitle, WithStyles, With
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
             4 => [
-                'font' => ['bold' => true],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => '4472C4'],

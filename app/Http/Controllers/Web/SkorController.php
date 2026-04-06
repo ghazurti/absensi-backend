@@ -8,6 +8,7 @@ use App\Models\Absensi;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SkorController extends Controller
@@ -53,14 +54,24 @@ class SkorController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $bulan  = $request->get('bulan', Carbon::now()->month);
-        $tahun  = $request->get('tahun', Carbon::now()->year);
-        $unit   = $request->get('unit');
+        try {
+            $bulan  = $request->get('bulan', Carbon::now()->month);
+            $tahun  = $request->get('tahun', Carbon::now()->year);
+            $unit   = $request->get('unit');
 
-        $namaBulan = Carbon::create($tahun, $bulan)->locale('id')->isoFormat('MMMM-YYYY');
-        $filename  = 'skor-kehadiran-' . ($unit ? strtolower(str_replace(' ', '-', $unit)) . '-' : '') . $namaBulan . '.xlsx';
+            $namaBulan = Carbon::create($tahun, $bulan)->locale('id')->isoFormat('MMMM-YYYY');
+            $filename  = 'skor-kehadiran-' . ($unit ? strtolower(str_replace(' ', '-', $unit)) . '-' : '') . $namaBulan . '.xlsx';
 
-        return Excel::download(new SkorExport($bulan, $tahun, $unit), $filename);
+            return Excel::download(new SkorExport($bulan, $tahun, $unit), $filename);
+        } catch (\Exception $e) {
+            Log::error('Error Export Excel Skor: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return back()->with('error', 'Terjadi kesalahan saat mengekspor Excel: ' . $e->getMessage());
+        }
     }
 
     public function cetak(Request $request)
@@ -85,13 +96,15 @@ class SkorController extends Controller
     /**
      * Hitung skor kehadiran pegawai berdasarkan data absensi
      */
-    public function hitungSkor(User $pegawai, int $bulan, int $tahun): array
+    public function hitungSkor(User $pegawai, int $bulan, int $tahun, $absensis = null): array
     {
-        $absensis = Absensi::with('shift')
-            ->where('user_id', $pegawai->id)
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->get();
+        if ($absensis === null) {
+            $absensis = Absensi::with('shift')
+                ->where('user_id', $pegawai->id)
+                ->whereMonth('tanggal', $bulan)
+                ->whereYear('tanggal', $tahun)
+                ->get();
+        }
 
         $kt = [
             'KT1' => 0, 'KT2' => 0, 'KT3' => 0, 'KT4' => 0,
