@@ -28,8 +28,8 @@ class SkorController extends Controller
     public function index(Request $request)
     {
         $authUser = auth()->user();
-        $bulan    = $request->get('bulan', Carbon::now()->month);
-        $tahun    = $request->get('tahun', Carbon::now()->year);
+        $bulan    = (int) $request->get('bulan', Carbon::now()->month);
+        $tahun    = (int) $request->get('tahun', Carbon::now()->year);
         $unit     = $request->get('unit');
 
         if ($authUser->isAdmin()) {
@@ -55,30 +55,30 @@ class SkorController extends Controller
     public function exportExcel(Request $request)
     {
         try {
-            $bulan  = $request->get('bulan', Carbon::now()->month);
-            $tahun  = $request->get('tahun', Carbon::now()->year);
+            $bulan  = (int) $request->get('bulan', Carbon::now()->month);
+            $tahun  = (int) $request->get('tahun', Carbon::now()->year);
             $unit   = $request->get('unit');
 
             $namaBulan = Carbon::create($tahun, $bulan)->locale('id')->isoFormat('MMMM-YYYY');
             $filename  = 'skor-kehadiran-' . ($unit ? strtolower(str_replace(' ', '-', $unit)) . '-' : '') . $namaBulan . '.xlsx';
 
             return Excel::download(new SkorExport($bulan, $tahun, $unit), $filename);
-        } catch (\Exception $e) {
-            Log::error('Error Export Excel Skor: ' . $e->getMessage(), [
+        } catch (\Throwable $e) {
+            Log::error('Error Export Excel Skor (Fatal): ' . $e->getMessage(), [
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
             
-            return back()->with('error', 'Terjadi kesalahan saat mengekspor Excel: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan sistem saat mengekspor Excel: ' . $e->getMessage());
         }
     }
 
     public function cetak(Request $request)
     {
         $authUser = auth()->user();
-        $bulan    = $request->get('bulan', Carbon::now()->month);
-        $tahun    = $request->get('tahun', Carbon::now()->year);
+        $bulan    = (int) $request->get('bulan', Carbon::now()->month);
+        $tahun    = (int) $request->get('tahun', Carbon::now()->year);
         $userId   = $authUser->isAdmin() ? $request->get('user_id', $authUser->id) : $authUser->id;
 
         $pegawai = User::findOrFail($userId);
@@ -90,7 +90,7 @@ class SkorController extends Controller
         $skor = $this->hitungSkor($pegawai, $bulan, $tahun);
         $pejabatPenilai = User::where('role', 'admin')->first();
 
-        return view('laporan.skor-cetak', compact('pegawai', 'skor', 'bulan', 'tahun', 'pejabatPenilai'));
+        return view('laporan.skor-cetak', compact('pegawai', $skor, 'bulan', 'tahun', 'pejabatPenilai'));
     }
 
     /**
@@ -205,5 +205,4 @@ class SkorController extends Controller
             $kt['KT1']++;
         }
     }
-
 }

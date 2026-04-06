@@ -25,7 +25,7 @@ class SkorExport implements FromArray, WithHeadings, WithTitle, WithStyles, With
     {
         $this->bulan = $bulan;
         $this->tahun = $tahun;
-        $this->unit  = $unit;
+        $this->unit = $unit;
     }
 
     public function array(): array
