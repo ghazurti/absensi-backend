@@ -10,10 +10,7 @@ use Illuminate\Http\Request;
 
 class AbsensiController extends Controller
 {
-    // Koordinat RSUD Kota Baubau
-    const RSUD_LAT = -5.4677;
-    const RSUD_LNG = 122.6307;
-    const RADIUS = 200; // meter
+    // Koordinat Rumah/Kantor akan diambil dari config/attendance.php
 
     public function index(Request $request)
     {
@@ -52,9 +49,9 @@ class AbsensiController extends Controller
             return back()->with('error', 'Anda sudah melakukan check-in hari ini.');
         }
 
-        $jarak = $this->hitungJarak($request->latitude, $request->longitude, self::RSUD_LAT, self::RSUD_LNG);
-        if ($jarak > self::RADIUS) {
-            return back()->with('error', 'Anda berada di luar area RSUD. Jarak: ' . round($jarak) . ' meter.');
+        $jarak = $this->hitungJarak($request->latitude, $request->longitude, config("attendance.latitude"), config("attendance.longitude"));
+        if ($jarak > config("attendance.radius")) {
+            return back()->with('error', 'Anda berada di luar area absen. Jarak: ' . round($jarak) . ' meter.');
         }
 
         $fotoPath = $request->file('foto')->store('foto-absensi', 'public');
@@ -105,9 +102,9 @@ class AbsensiController extends Controller
             return back()->with('error', 'Anda sudah melakukan check-out hari ini.');
         }
 
-        $jarak = $this->hitungJarak($request->latitude, $request->longitude, self::RSUD_LAT, self::RSUD_LNG);
-        if ($jarak > self::RADIUS) {
-            return back()->with('error', 'Anda berada di luar area RSUD. Jarak: ' . round($jarak) . ' meter.');
+        $jarak = $this->hitungJarak($request->latitude, $request->longitude, config("attendance.latitude"), config("attendance.longitude"));
+        if ($jarak > config("attendance.radius")) {
+            return back()->with('error', 'Anda berada di luar area absen. Jarak: ' . round($jarak) . ' meter.');
         }
 
         $fotoPath = $request->file('foto')->store('foto-absensi', 'public');

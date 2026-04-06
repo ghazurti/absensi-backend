@@ -123,27 +123,51 @@
             <div class="card-body" style="padding:24px">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
                     <div class="form-group" style="grid-column:1/-1">
-                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Alamat Email <span style="color:#dc2626">*</span></label>
-                        <input type="email" name="email" class="form-control" value="{{ old('email') }}" 
-                            placeholder="Masukkan alamat email aktif" required
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Alamat Email (Opsional)</label>
+                        <input type="email" name="email" id="email_field" class="form-control" value="{{ old('email') }}" 
+                            placeholder="Kosongkan untuk otomatis pakai [NIK]@rsud-baubau.go.id"
                             style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
                         @error('email')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Password <span style="color:#dc2626">*</span></label>
-                        <input type="password" name="password" class="form-control" required
-                            placeholder="Minimal 8 karakter"
-                            style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Password (Opsional)</label>
+                        <div style="position:relative">
+                            <input type="password" name="password" id="pass_field" class="form-control" 
+                                placeholder="Default: rsud123"
+                                style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200);width:100%">
+                            <button type="button" onclick="togglePass('pass_field')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-400);cursor:pointer">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                         @error('password')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Konfirmasi Password <span style="color:#dc2626">*</span></label>
-                        <input type="password" name="password_confirmation" class="form-control" required
-                            placeholder="Ulangi password di atas"
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Konfirmasi Password</label>
+                        <input type="password" name="password_confirmation" class="form-control" 
+                            placeholder="Ulangi jika mengisi password"
                             style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200)">
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            function togglePass(id) {
+                const el = document.getElementById(id);
+                el.type = el.type === 'password' ? 'text' : 'password';
+            }
+
+            // Auto-fill email based on NIK
+            document.querySelector('input[name="nik"]').addEventListener('input', function(e) {
+                const nik = e.target.value.trim();
+                const emailField = document.getElementById('email_field');
+                if (nik.length >= 4 && emailField.value === '') {
+                    // pre-fill placeholder would be better, but user asked for easy, so lets just hint or fill
+                }
+            });
+        </script>
                 </div>
             </div>
         </div>

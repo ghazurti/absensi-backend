@@ -55,14 +55,15 @@ class AbsensiController extends Controller
             return response()->json(['message' => 'Anda sudah melakukan check-in hari ini'], 422);
         }
 
-        // Cek jarak dari RSUD (koordinat bisa disesuaikan)
-        $rsudLat = -5.4677;
-        $rsudLng = 122.6307;
-        $jarak = $this->hitungJarak($request->latitude, $request->longitude, $rsudLat, $rsudLng);
+        // Cek jarak
+        $locLat = config('attendance.latitude');
+        $locLng = config('attendance.longitude');
+        $radius = config('attendance.radius');
+        $jarak = $this->hitungJarak($request->latitude, $request->longitude, $locLat, $locLng);
 
-        if ($jarak > 200) { // radius 200 meter
+        if ($jarak > $radius) {
             return response()->json([
-                'message' => 'Anda berada di luar area RSUD. Jarak: ' . round($jarak) . ' meter'
+                'message' => 'Anda berada di luar area absen. Jarak: ' . round($jarak) . ' meter'
             ], 422);
         }
 

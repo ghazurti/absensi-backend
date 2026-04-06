@@ -134,7 +134,7 @@
         {{-- Info Pegawai --}}
         <div class="card">
             <div class="card-header">
-                <span><i class="bi bi-person-badge me-2" style="color:var(--primary)"></i>PNS/ASN Yang Dinilai</span>
+                <span><i class="bi bi-person-badge me-2" style="color:var(--primary)"></i>Pegawai Yang Dinilai</span>
             </div>
             <div class="card-body" style="padding:0">
                 <table style="width:100%;font-size:13px;border-collapse:collapse">
@@ -237,37 +237,55 @@
                         <th rowspan="2" style="width:50px">Kode</th>
                         <th rowspan="2">Kriteria</th>
                         <th rowspan="2" style="width:50px">%</th>
-                        <th colspan="2">Hasil Pengukuran</th>
+                        <th colspan="3">Hasil Pengukuran</th>
                     </tr>
                     <tr>
                         <th style="width:70px">Kali<br><small>TL</small></th>
+                        <th style="width:70px">Kali<br><small>PSW</small></th>
                         <th style="width:80px">Jumlah</th>
                     </tr>
                     <tr>
                         <th colspan="5" style="background:#1e3a5f;color:#fff;border-color:#1e3a5f"></th>
-                        <th style="background:#1e3a5f;color:#fff;border-color:#1e3a5f;font-size:11px">TL</th>
+                        <th colspan="2" style="background:#1e3a5f;color:#fff;border-color:#1e3a5f;font-size:11px">TL / PSW</th>
                         <th style="background:#1e3a5f;color:#fff;border-color:#1e3a5f">100</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td class="num-cell">1</td>
-                        <td class="indikator-cell" rowspan="7">Ketidakhadiran</td>
+                        <td class="indikator-cell" rowspan="6">Ketidakhadiran</td>
                         <td class="kode-cell">KT1</td>
                         <td>{{ $skor['detail']['KT1']['label'] }}</td>
                         <td class="persen-cell">{{ $skor['detail']['KT1']['persen'] }}</td>
-                        <td class="num-cell">{{ $skor['detail']['KT1']['kali'] }}</td>
+                        <td class="num-cell">
+                            {{ collect($skor['hari'])->where('tl', '>', 0)->where('tl', '<=', 30)->count() }}
+                        </td>
+                        <td class="num-cell">
+                            {{ collect($skor['hari'])->where('psw', '>', 0)->where('psw', '<=', 30)->count() }}
+                        </td>
                         <td class="jumlah-cell {{ $skor['detail']['KT1']['jumlah'] > 0 ? 'has-val' : '' }}">
                             {{ $skor['detail']['KT1']['jumlah'] > 0 ? number_format($skor['detail']['KT1']['jumlah'],2) : '0' }}
                         </td>
                     </tr>
-                    @foreach(['KT2','KT3','KT4','KT5','KT6','KT7'] as $kode)
+                    @foreach(['KT2','KT3','KT4','KT5','KT6'] as $kode)
                     <tr>
                         <td class="num-cell"></td>
                         <td class="kode-cell">{{ $kode }}</td>
                         <td>{{ $skor['detail'][$kode]['label'] }}</td>
                         <td class="persen-cell">{{ $skor['detail'][$kode]['persen'] }}</td>
-                        <td class="num-cell">{{ $skor['detail'][$kode]['kali'] }}</td>
+                        <td class="num-cell">
+                            @if($kode == 'KT2') {{ collect($skor['hari'])->where('tl', '>', 30)->where('tl', '<=', 60)->count() }}
+                            @elseif($kode == 'KT3') {{ collect($skor['hari'])->where('tl', '>', 60)->where('tl', '<=', 90)->count() }}
+                            @elseif($kode == 'KT4') {{ collect($skor['hari'])->where('tl', '>', 90)->count() }}
+                            @elseif($kode == 'KT5' || $kode == 'KT6') {{ $skor['detail'][$kode]['kali'] }}
+                            @else - @endif
+                        </td>
+                        <td class="num-cell">
+                            @if($kode == 'KT2') {{ collect($skor['hari'])->where('psw', '>', 30)->where('psw', '<=', 60)->count() }}
+                            @elseif($kode == 'KT3') {{ collect($skor['hari'])->where('psw', '>', 60)->where('psw', '<=', 90)->count() }}
+                            @elseif($kode == 'KT4') {{ collect($skor['hari'])->where('psw', '>', 90)->count() }}
+                            @else 0 @endif
+                        </td>
                         <td class="jumlah-cell {{ $skor['detail'][$kode]['jumlah'] > 0 ? 'has-val' : '' }}">
                             {{ $skor['detail'][$kode]['jumlah'] > 0 ? number_format($skor['detail'][$kode]['jumlah'],2) : '0' }}
                         </td>
@@ -276,7 +294,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="6" style="text-align:right;font-size:14px">Total Skor</td>
+                        <td colspan="7" style="text-align:right;font-size:14px">Total Skor</td>
                         <td style="font-size:18px;color:#fbbf24">{{ number_format($skor['skor_akhir'], 2) }}</td>
                     </tr>
                 </tfoot>

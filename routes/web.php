@@ -43,6 +43,8 @@ Route::middleware(['auth'])->group(function () {
     // Admin only
     Route::middleware('admin')->group(function () {
         // Kelola Pegawai
+        Route::get('/pegawai/template', [PegawaiController::class, 'importTemplate'])->name('pegawai.template');
+        Route::post('/pegawai/import', [PegawaiController::class, 'import'])->name('pegawai.import');
         Route::resource('/pegawai', PegawaiController::class);
 
         // Kelola Departemen

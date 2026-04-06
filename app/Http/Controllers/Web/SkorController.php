@@ -14,13 +14,12 @@ class SkorController extends Controller
      * Kriteria pemotongan skor kehadiran berdasarkan dokumen resmi
      */
     const KRITERIA = [
-        'KT1' => ['label' => 'Terlambat hadir sampai dengan 30 (tiga puluh) menit',                                              'persen' => 0.25],
-        'KT2' => ['label' => 'Terlambat hadir lebih dari 30 (tiga puluh) menit sampai 60 (enam puluh) menit',                   'persen' => 0.5],
-        'KT3' => ['label' => 'Terlambat hadir lebih dari 60 (enam puluh) menit sampai 90 (sembilan puluh) menit',               'persen' => 0.75],
-        'KT4' => ['label' => 'Terlambat lebih dari 90 (sembilan puluh) menit',                                                   'persen' => 1],
+        'KT1' => ['label' => 'Terlambat hadir / Pulang sebelum waktunya (1 - 30 menit)',                                        'persen' => 0.25],
+        'KT2' => ['label' => 'Terlambat hadir / Pulang sebelum waktunya (31 - 60) menit',                                       'persen' => 0.5],
+        'KT3' => ['label' => 'Terlambat hadir / Pulang sebelum waktunya (61 - 90) menit',                                       'persen' => 0.75],
+        'KT4' => ['label' => 'Terlambat / Pulang sebelum waktunya (> 90) menit',                                                'persen' => 1],
         'KT5' => ['label' => 'Tidak melakukan absen pulang',                                                                     'persen' => 0.25],
         'KT6' => ['label' => 'Tidak hadir bekerja dan/atau tidak melakukan absensi dalam 1 (satu) hari',                        'persen' => 3],
-        'KT7' => ['label' => 'Tidak mengikuti upacara atau apel pagi setiap hari senin yang diperintahkan oleh kepala daerah',  'persen' => 1],
     ];
 
     public function index(Request $request)
@@ -63,40 +62,56 @@ class SkorController extends Controller
 
         $kt = [
             'KT1' => 0, 'KT2' => 0, 'KT3' => 0, 'KT4' => 0,
-            'KT5' => 0, 'KT6' => 0, 'KT7' => 0,
+            'KT5' => 0, 'KT6' => 0,
         ];
+        
+        $detailHari = [];
 
         foreach ($absensis as $a) {
+            $hariTL  = 0;
+            $hariPSW = 0;
+
             // KT6: Alpha / tidak hadir
             if ($a->status === 'alpha') {
                 $kt['KT6']++;
+                $detailHari[$a->tanggal->format('Y-m-d')] = ['tl' => 0, 'psw' => 0, 'status' => 'alpha'];
                 continue;
             }
 
             // KT5: Ada check-in tapi tidak check-out
-            if ($a->check_in && !$a->check_out) {
+            if ($a->check_in && !$a->check_out && $a->status !== 'izin' && $a->status !== 'sakit') {
                 $kt['KT5']++;
             }
 
-            // KT1-KT4: Hitung menit terlambat
+            // 1. Hitung TL (Terlambat)
             if ($a->check_in && $a->shift) {
                 $jamMasuk  = Carbon::parse($a->tanggal->format('Y-m-d') . ' ' . $a->shift->jam_masuk);
                 $checkIn   = Carbon::parse($a->check_in);
-                $menit     = $jamMasuk->diffInMinutes($checkIn, false); // positif = terlambat
+                $menitTL   = $jamMasuk->diffInMinutes($checkIn, false); // positif = terlambat
 
-                if ($menit > 90) {
-                    $kt['KT4']++;
-                } elseif ($menit > 60) {
-                    $kt['KT3']++;
-                } elseif ($menit > 30) {
-                    $kt['KT2']++;
-                } elseif ($menit > 0) {
-                    $kt['KT1']++;
+                if ($menitTL > 0) {
+                    $hariTL = $menitTL;
+                    $this->assignTier($menitTL, $kt);
                 }
-            } elseif ($a->status === 'terlambat' && !$a->shift) {
-                // Fallback jika tidak ada shift: anggap KT1
-                $kt['KT1']++;
             }
+
+            // 2. Hitung PSW (Pulang Sebelum Waktunya)
+            if ($a->check_out && $a->shift) {
+                $jamKeluar  = Carbon::parse($a->tanggal->format('Y-m-d') . ' ' . $a->shift->jam_keluar);
+                $checkOut   = Carbon::parse($a->check_out);
+                $menitPSW   = $checkOut->diffInMinutes($jamKeluar, false); // positif = pulang awal (PSW)
+
+                if ($menitPSW > 0) {
+                    $hariPSW = $menitPSW;
+                    $this->assignTier($menitPSW, $kt);
+                }
+            }
+
+            $detailHari[$a->tanggal->format('Y-m-d')] = [
+                'tl'     => $hariTL,
+                'psw'    => $hariPSW,
+                'status' => $a->status
+            ];
         }
 
         // Hitung potongan dan total
@@ -125,6 +140,24 @@ class SkorController extends Controller
             'total_hadir'   => $absensis->whereIn('status', ['hadir', 'terlambat'])->count(),
             'total_alpha'   => $absensis->where('status', 'alpha')->count(),
             'total_izin'    => $absensis->whereIn('status', ['izin', 'sakit'])->count(),
+            'hari'          => $detailHari,
         ];
     }
+
+    /**
+     * Masukkan durasi (menit) ke tier KT1-KT4
+     */
+    private function assignTier(int $menit, &$kt)
+    {
+        if ($menit > 90) {
+            $kt['KT4']++;
+        } elseif ($menit > 60) {
+            $kt['KT3']++;
+        } elseif ($menit > 30) {
+            $kt['KT2']++;
+        } elseif ($menit > 0) {
+            $kt['KT1']++;
+        }
+    }
+
 }

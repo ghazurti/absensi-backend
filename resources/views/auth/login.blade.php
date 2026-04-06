@@ -15,7 +15,6 @@
             display: flex;
             overflow: hidden;
         }
-
         /* ===== LEFT PANEL ===== */
         .left-panel {
             width: 48%;
@@ -264,67 +263,7 @@
             gap: 5px;
         }
 
-        /* Portal Demo */
-        .portal-section { margin-top: 28px; border-top: 1px solid #f3f4f6; padding-top: 24px; }
-        .portal-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #374151;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .portal-title i { color: #3949ab; }
-        .portal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
-        .portal-btn {
-            border: 1.5px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 12px 8px;
-            text-align: center;
-            cursor: pointer;
-            background: #fff;
-            transition: all .2s;
-            font-size: 12px;
-            color: #374151;
-            font-weight: 500;
-        }
-        .portal-btn i { display: block; font-size: 20px; margin-bottom: 4px; color: #6b7280; }
-        .portal-btn:hover, .portal-btn.active {
-            border-color: #3949ab;
-            background: #eef0fb;
-            color: #3949ab;
-        }
-        .portal-btn.active i { color: #3949ab; }
 
-        .demo-card {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 12px 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: border-color .2s;
-        }
-        .demo-card:hover { border-color: #3949ab; }
-        .demo-card .dc-icon {
-            width: 36px; height: 36px;
-            background: #eef0fb;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            color: #3949ab; font-size: 16px;
-        }
-        .demo-card .dc-info { flex: 1; }
-        .demo-card .dc-name { font-size: 13px; font-weight: 600; color: #111827; }
-        .demo-card .dc-email { font-size: 12px; color: #6b7280; }
-        .demo-card .dc-badge {
-            font-size: 11px; padding: 2px 8px;
-            border-radius: 20px;
-            background: #eef0fb; color: #3949ab;
-            font-weight: 600;
-        }
 
         /* Error */
         .alert-err {
@@ -465,36 +404,7 @@
             Data Anda tersimpan aman di server kami
         </div>
 
-        <!-- Portal Demo -->
-        <div class="portal-section">
-            <div class="portal-title">
-                <i class="bi bi-grid"></i>
-                Pilih Role untuk Demo
-            </div>
-            <div class="portal-grid">
-                <div class="portal-btn active" onclick="setDemo('admin','admin@rsud-baubau.go.id','admin123',this)">
-                    <i class="bi bi-shield-check"></i>
-                    Admin
-                </div>
-                <div class="portal-btn" onclick="setDemo('pegawai','pegawai@rsud-baubau.go.id','pegawai123',this)">
-                    <i class="bi bi-building"></i>
-                    Unit
-                </div>
-                <div class="portal-btn" onclick="setDemo('pegawai','dr.budi@rsud-baubau.go.id','budi123',this)">
-                    <i class="bi bi-person"></i>
-                    Pegawai
-                </div>
-            </div>
 
-            <div class="demo-card" id="demoCard" onclick="isiDemo()">
-                <div class="dc-icon"><i class="bi bi-person-circle"></i></div>
-                <div class="dc-info">
-                    <div class="dc-name" id="demoName">Administrator RSUD</div>
-                    <div class="dc-email" id="demoEmail">admin@rsud-baubau.go.id</div>
-                </div>
-                <span class="dc-badge" id="demoBadge">Admin</span>
-            </div>
-        </div>
 
         <p class="text-center mt-4" style="font-size:12px;color:#9ca3af">
             &copy; {{ date('Y') }} RSUD Kota Baubau. Hak Cipta Dilindungi.
@@ -515,31 +425,7 @@
         }
     }
 
-    // Demo portal
-    const demoData = {
-        admin:   { name: 'Administrator RSUD', email: 'admin@rsud-baubau.go.id',    pass: 'admin123',    badge: 'Admin' },
-        unit:    { name: 'Kepala Unit IGD',     email: 'unit@rsud-baubau.go.id',     pass: 'unit123',     badge: 'Unit' },
-        pegawai: { name: 'Pegawai RSUD',        email: 'pegawai@rsud-baubau.go.id',  pass: 'pegawai123',  badge: 'Pegawai' },
-    };
-    let activeDemo = demoData.admin;
 
-    function setDemo(type, email, pass, el) {
-        document.querySelectorAll('.portal-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-
-        activeDemo = { name: el.querySelector('i').nextSibling?.textContent?.trim() || type, email, pass, badge: type };
-        document.getElementById('demoName').textContent = email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-        document.getElementById('demoEmail').textContent = email;
-        document.getElementById('demoBadge').textContent = el.querySelector('i').nextSibling?.textContent?.trim() || type;
-        activeDemo.email = email;
-        activeDemo.pass = pass;
-    }
-
-    function isiDemo() {
-        document.getElementById('email').value = activeDemo.email;
-        document.getElementById('password').value = activeDemo.pass;
-        document.getElementById('email').focus();
-    }
 
     // Loading state on submit
     document.getElementById('loginForm').addEventListener('submit', function() {

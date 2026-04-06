@@ -8,9 +8,14 @@
         <h1 style="margin:0;font-size:26px;font-weight:800;color:var(--gray-900);letter-spacing:-0.5px">Data Pegawai</h1>
         <p style="margin:4px 0 0;font-size:14px;color:var(--gray-500)">Kelola profil dan informasi kepegawaian RSUD Kota Baubau</p>
     </div>
-    <a href="{{ route('pegawai.create') }}" class="btn btn-primary" style="padding:12px 20px;border-radius:12px;box-shadow:0 10px 15px -3px rgba(37,99,235,0.2)">
-        <i class="bi bi-plus-lg"></i> Tambah Pegawai
-    </a>
+    <div style="display:flex;gap:10px">
+        <button type="button" class="btn" onclick="openImportModal()" style="padding:12px 20px;border-radius:12px;background:#f8fafc;color:#475569;border:1px solid #e2e8f0;font-weight:600;display:flex;align-items:center;gap:8px">
+            <i class="bi bi-file-earmark-arrow-up"></i> Impor CSV
+        </button>
+        <a href="{{ route('pegawai.create') }}" class="btn btn-primary" style="padding:12px 20px;border-radius:12px;box-shadow:0 10px 15px -3px rgba(37,99,235,0.2)">
+            <i class="bi bi-plus-lg"></i> Tambah Pegawai
+        </a>
+    </div>
 </div>
 
 <div class="card" style="border:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);border-radius:16px;overflow:hidden">
@@ -128,3 +133,46 @@
     @endif
 </div>
 @endsection
+
+{{-- Modal Import --}}
+<div id="importModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;width:100%;max-width:500px;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)">
+        <div style="padding:24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0;font-size:18px;font-weight:800;color:#1e293b">Impor Data Pegawai</h3>
+            <button onclick="closeImportModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form action="{{ route('pegawai.import') }}" method="POST" enctype="multipart/form-data" style="padding:24px">
+            @csrf
+            <div style="margin-bottom:20px">
+                <label style="display:block;font-weight:600;font-size:14px;color:#475569;margin-bottom:8px">Pilih File CSV</label>
+                <input type="file" name="file" required class="form-control" style="padding:10px;border-radius:8px;border:1px solid #e2e8f0;width:100%">
+                <p style="font-size:12px;color:#64748b;margin-top:12px;line-height:1.6">
+                    <i class="bi bi-info-circle me-1"></i> Gunakan template kami untuk hasil terbaik.<br>
+                    <a href="{{ route('pegawai.template') }}" style="color:var(--primary);font-weight:700;text-decoration:none">
+                        Unduh Template CSV <i class="bi bi-download"></i>
+                    </a>
+                </p>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:32px;padding-top:20px;border-top:1px solid #f1f5f9">
+                <button type="button" onclick="closeImportModal()" style="padding:10px 20px;border-radius:10px;background:#f1f5f9;border:none;color:#475569;font-weight:600;cursor:pointer">Batal</button>
+                <button type="submit" style="padding:10px 24px;border-radius:10px;background:var(--primary);border:none;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 4px 6px -1px rgba(37,99,235,0.2)">Mulai Impor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openImportModal() {
+        document.getElementById('importModal').style.display = 'flex';
+    }
+    function closeImportModal() {
+        document.getElementById('importModal').style.display = 'none';
+    }
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        let modal = document.getElementById('importModal');
+        if (event.target == modal) {
+            closeImportModal();
+        }
+    }
+</script>

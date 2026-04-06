@@ -220,15 +220,15 @@ let stream = null, capturedBlob = null, gpsLat = null, gpsLng = null;
 navigator.geolocation.getCurrentPosition(pos => {
     gpsLat = pos.coords.latitude;
     gpsLng = pos.coords.longitude;
-    const jarak = hitungJarak(gpsLat, gpsLng, -5.4677, 122.6307);
+    const jarak = hitungJarak(gpsLat, gpsLng, {{ config('attendance.latitude') }}, {{ config('attendance.longitude') }});
     const bar = document.getElementById('gpsBar');
     document.getElementById('gpsSpinner').remove();
-    if (jarak <= 200) {
+    if (jarak <= {{ config('attendance.radius') }}) {
         bar.className = 'gps-bar ok';
-        document.getElementById('gpsText').innerHTML = `<i class="bi bi-geo-alt-fill"></i> Lokasi valid — ${Math.round(jarak)} meter dari RSUD`;
+        document.getElementById('gpsText').innerHTML = `<i class="bi bi-geo-alt-fill"></i> Lokasi valid — ${Math.round(jarak)} meter dari Lokasi`;
     } else {
         bar.className = 'gps-bar err';
-        document.getElementById('gpsText').innerHTML = `<i class="bi bi-geo-alt"></i> Di luar area RSUD — ${Math.round(jarak)} meter`;
+        document.getElementById('gpsText').innerHTML = `<i class="bi bi-geo-alt"></i> Di luar area absen — ${Math.round(jarak)} meter`;
     }
     updateBtn();
 }, () => {
