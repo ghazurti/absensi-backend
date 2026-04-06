@@ -81,7 +81,7 @@
                         <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Unit / Departemen</label>
                         <select name="unit" class="form-control form-select" style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200);height:auto">
                             <option value="">-- Pilih Departemen --</option>
-                            @foreach(\App\Models\Department::all() as $dept)
+                            @foreach($departments as $dept)
                                 <option value="{{ $dept->nama }}" {{ old('unit') == $dept->nama ? 'selected' : '' }}>
                                     {{ $dept->nama }}
                                 </option>
@@ -168,9 +168,12 @@
                 }
             });
         </script>
-                </div>
-            </div>
+
+        @if($errors->has('error'))
+        <div class="alert alert-danger" style="padding:12px 16px;border-radius:10px;margin-bottom:16px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca">
+            <i class="bi bi-exclamation-circle me-2"></i> {{ $errors->first('error') }}
         </div>
+        @endif
 
         <div style="display:flex;gap:12px;align-items:center;margin-bottom:40px">
             <button type="submit" class="btn btn-primary" style="padding:14px 32px;border-radius:12px;font-weight:700;font-size:15px;box-shadow:0 10px 15px -3px rgba(37,99,235,0.2)">

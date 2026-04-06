@@ -74,7 +74,7 @@
                         <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Unit / Departemen</label>
                         <select name="unit" class="form-control form-select" style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200);height:auto">
                             <option value="">-- Pilih Departemen --</option>
-                            @foreach(\App\Models\Department::all() as $dept)
+                            @foreach($departments as $dept)
                                 <option value="{{ $dept->nama }}" {{ old('unit', $pegawai->unit) == $dept->nama ? 'selected' : '' }}>
                                     {{ $dept->nama }}
                                 </option>

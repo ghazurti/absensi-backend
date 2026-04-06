@@ -26,7 +26,11 @@ class PegawaiController extends Controller
 
     public function create()
     {
-        $departments = \App\Models\Department::orderBy('nama')->get();
+        try {
+            $departments = \App\Models\Department::orderBy('nama')->get();
+        } catch (\Exception $e) {
+            $departments = collect();
+        }
         return view('pegawai.create', compact('departments'));
     }
 
@@ -136,7 +140,11 @@ class PegawaiController extends Controller
 
     public function edit(User $pegawai)
     {
-        $departments = \App\Models\Department::orderBy('nama')->get();
+        try {
+            $departments = \App\Models\Department::orderBy('nama')->get();
+        } catch (\Exception $e) {
+            $departments = collect();
+        }
         return view('pegawai.edit', compact('pegawai', 'departments'));
     }
 
