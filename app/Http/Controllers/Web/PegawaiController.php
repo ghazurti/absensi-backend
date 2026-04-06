@@ -44,24 +44,28 @@ class PegawaiController extends Controller
             'password' => 'nullable|min:6|confirmed',
         ]);
 
-        // Smart Defaults
-        $email = $request->email ?: $request->nik . '@rsud-baubau.go.id';
-        $password = $request->password ?: 'rsud123';
+        try {
+            // Smart Defaults
+            $email = $request->email ?: $request->nik . '@rsud-baubau.go.id';
+            $password = $request->password ?: 'rsud123';
 
-        User::create([
-            'name' => $request->name,
-            'email' => $email,
-            'nik' => $request->nik,
-            'nip' => $request->nip,
-            'no_hp' => $request->no_hp,
-            'jabatan' => $request->jabatan,
-            'pangkat_gol' => $request->pangkat_gol,
-            'unit' => $request->unit,
-            'role' => 'pegawai',
-            'password' => Hash::make($password),
-        ]);
+            User::create([
+                'name' => $request->name,
+                'email' => $email,
+                'nik' => $request->nik,
+                'nip' => $request->nip,
+                'no_hp' => $request->no_hp,
+                'jabatan' => $request->jabatan,
+                'pangkat_gol' => $request->pangkat_gol,
+                'unit' => $request->unit,
+                'role' => 'pegawai',
+                'password' => Hash::make($password),
+            ]);
 
-        return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil ditambahkan.');
+            return redirect()->route('pegawai.index')->with('success', 'Pegawai berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Gagal menyimpan data: ' . $e->getMessage()])->withInput();
+        }
     }
 
     public function importTemplate()
