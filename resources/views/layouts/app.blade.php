@@ -437,7 +437,7 @@
             </a>
         </div>
 
-        @if(!auth()->user()->isAdmin())
+        @if(auth()->user()->role !== 'admin')
         <div class="nav-section">Kehadiran</div>
 
         <div class="nav-item">
@@ -504,6 +504,13 @@
         </div>
 
         <div class="nav-item">
+            <a href="{{ route('audit.logs') }}" class="nav-link {{ request()->routeIs('audit.logs') ? 'active' : '' }}">
+                <i class="bi bi-shield-check"></i>
+                Audit Log
+            </a>
+        </div>
+
+        <div class="nav-item">
             <a href="{{ route('izin.index') }}" class="nav-link {{ request()->routeIs('izin.*') ? 'active' : '' }}">
                 <i class="bi bi-check2-square"></i>
                 Persetujuan Cuti
@@ -556,6 +563,7 @@
             </a>
         </div>
 
+        @if(auth()->user()->isAdminOrKepalaUnit())
         <div class="nav-section">Laporan</div>
 
         <div class="nav-item">
@@ -578,6 +586,13 @@
             </div>
         </div>
         @endif
+
+        <div style="margin-top: auto; padding: 20px 10px 10px; border-top: 1px solid var(--gray-100); opacity: 0.6">
+            <div style="font-size: 10px; color: var(--gray-500); text-align: center; line-height: 1.4">
+                Developed by <span style="color: var(--primary); font-weight: 700">Ghazur</span><br>
+                &copy; 2026 — Development
+            </div>
+        </div>
     </nav>
 </aside>
 
@@ -607,7 +622,15 @@
             <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
             <div class="user-info">
                 <div class="user-name">{{ auth()->user()->name }}</div>
-                <div class="user-role">{{ auth()->user()->isAdmin() ? 'Administrator' : 'Pegawai' }}</div>
+                <div class="user-role">
+                    @if(auth()->user()->isAdmin())
+                        Administrator
+                    @elseif(auth()->user()->isKepalaUnit())
+                        Kepala Unit ({{ auth()->user()->unit }})
+                    @else
+                        Pegawai
+                    @endif
+                </div>
             </div>
             <i class="bi bi-chevron-down user-chevron"></i>
 

@@ -39,6 +39,10 @@ Route::middleware('auth:api')->name('api.')->group(function () {
     // Izin
     Route::apiResource('izin', IzinController::class)->except(['update', 'edit', 'create']);
 
+    // Fingerprint
+    Route::post('/fingerprint/enroll', [\App\Http\Controllers\Api\FingerprintController::class, 'enroll']);
+    Route::post('/fingerprint/attendance', [\App\Http\Controllers\Api\FingerprintController::class, 'attendance']);
+
     // Admin only
     Route::middleware('admin')->group(function () {
         Route::apiResource('pegawai', PegawaiController::class);

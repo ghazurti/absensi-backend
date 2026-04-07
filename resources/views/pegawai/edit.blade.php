@@ -117,6 +117,16 @@
                     </div>
 
                     <div class="form-group" style="grid-column:1/-1">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Role / Hak Akses <span style="color:#dc2626">*</span></label>
+                        <select name="role" class="form-control form-select" required style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200);height:auto">
+                            <option value="pegawai" {{ old('role', $pegawai->role) == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
+                            <option value="kepala_unit" {{ old('role', $pegawai->role) == 'kepala_unit' ? 'selected' : '' }}>Kepala Unit</option>
+                            <option value="admin" {{ old('role', $pegawai->role) == 'admin' ? 'selected' : '' }}>Administrator</option>
+                        </select>
+                        @error('role')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="form-group" style="grid-column:1/-1">
                         <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 16px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:10px">
                             <i class="bi bi-info-circle-fill" style="font-size:16px"></i>
                             <span>Kosongkan password jika Anda tidak ingin mengubahnya.</span>

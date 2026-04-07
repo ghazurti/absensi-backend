@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\AuditLogController;
 use App\Http\Controllers\Web\AbsensiController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\DashboardController;
@@ -79,6 +80,8 @@ Route::middleware(['auth'])->group(function () {
         // Persetujuan Koreksi Absensi
         Route::post('/koreksi/{koreksi}/approve', [\App\Http\Controllers\Web\KoreksiAbsensiController::class, 'approve'])->name('koreksi.approve');
         Route::post('/koreksi/{koreksi}/reject', [\App\Http\Controllers\Web\KoreksiAbsensiController::class, 'reject'])->name('koreksi.reject');
+        // Audit Log
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit.logs');
     });
 
     // Skor Kehadiran (Pegawai & Admin)
@@ -98,4 +101,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tukar-shift/{tukarShift}/confirm', [\App\Http\Controllers\Web\TukarShiftController::class, 'confirm'])->name('tukar_shift.confirm');
     Route::post('/tukar-shift/{tukarShift}/approve', [\App\Http\Controllers\Web\TukarShiftController::class, 'approve'])->name('tukar_shift.approve');
     Route::get('/tukar-shift/peer-shifts/{user}', [\App\Http\Controllers\Web\TukarShiftController::class, 'getPeerShifts'])->name('tukar_shift.peer_shifts');
+
+    // Fingerprint (Web Access)
+    Route::post('/fingerprint/enroll', [\App\Http\Controllers\Api\FingerprintController::class, 'enroll'])->name('fingerprint.enroll');
+    Route::post('/fingerprint/attendance', [\App\Http\Controllers\Api\FingerprintController::class, 'attendance'])->name('fingerprint.attendance');
 });

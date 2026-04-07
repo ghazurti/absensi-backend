@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\Auditable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -11,7 +12,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, Auditable;
 
     protected $fillable = [
         'name',
@@ -68,5 +69,15 @@ class User extends Authenticatable implements JWTSubject
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    public function isKepalaUnit()
+    {
+        return $this->role === 'kepala_unit';
+    }
+
+    public function isAdminOrKepalaUnit()
+    {
+        return in_array($this->role, ['admin', 'kepala_unit']);
     }
 }

@@ -125,6 +125,41 @@
     </div>
 </div>
 
+<div class="stat-grid" style="margin-top:-12px;margin-bottom:24px">
+    <div class="stat-card" style="box-shadow:none;border:1px dashed var(--gray-200)">
+        <div>
+            <div class="sc-label" style="font-size:11px">Pulang Awal (PSW)</div>
+            <div class="sc-val" style="font-size:20px;color:#d97706">{{ $data['psw_hari_ini'] }}</div>
+            <div style="font-size:10px;color:var(--gray-400)">Hari ini</div>
+        </div>
+        <div class="sc-icon" style="background:#fff7ed;color:#d97706;width:32px;height:32px;font-size:14px"><i class="bi bi-box-arrow-left"></i></div>
+    </div>
+    <div class="stat-card" style="box-shadow:none;border:1px dashed var(--gray-200)">
+        <div>
+            <div class="sc-label" style="font-size:11px">Lupa Absen Pulang</div>
+            <div class="sc-val" style="font-size:20px;color:#dc2626">{{ $data['lupa_absen_hari_ini'] }}</div>
+            <div style="font-size:10px;color:var(--gray-400)">Akumulasi</div>
+        </div>
+        <div class="sc-icon" style="background:#fef2f2;color:#dc2626;width:32px;height:32px;font-size:14px"><i class="bi bi-question-circle"></i></div>
+    </div>
+    <div class="stat-card" style="box-shadow:none;border:1px dashed var(--gray-200)">
+        <div>
+            <div class="sc-label" style="font-size:11px">Alpha Hari Ini</div>
+            <div class="sc-val" style="font-size:20px;color:#991b1b">{{ $data['alpha_hari_ini'] }}</div>
+            <div style="font-size:10px;color:var(--gray-400)">Belum Check-in</div>
+        </div>
+        <div class="sc-icon" style="background:#fef2f2;color:#991b1b;width:32px;height:32px;font-size:14px"><i class="bi bi-person-x"></i></div>
+    </div>
+    <div class="stat-card" style="box-shadow:none;border:1px dashed var(--gray-200)">
+        <div>
+            <div class="sc-label" style="font-size:11px">Koreksi Pending</div>
+            <div class="sc-val" style="font-size:20px;color:var(--primary)">{{ \App\Models\KoreksiAbsensi::where('status', 'pending')->count() }}</div>
+            <div style="font-size:10px;color:var(--gray-400)">Perlu Verifikasi</div>
+        </div>
+        <div class="sc-icon" style="background:var(--primary-light);color:var(--primary);width:32px;height:32px;font-size:14px"><i class="bi bi-pencil-square"></i></div>
+    </div>
+</div>
+
 {{-- Charts --}}
 <div class="chart-grid">
     <div class="card">
@@ -145,6 +180,19 @@
         </div>
         <div class="card-body">
             <canvas id="chartRekap" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+{{-- Unit Analytics --}}
+<div class="card" style="margin-bottom:24px">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+        <span><i class="bi bi-building me-2" style="color:var(--primary)"></i>Persentase Kehadiran per Unit (Bulan Ini)</span>
+        <span style="font-size:12px;color:var(--gray-400);font-weight:400">Berdasarkan rasio hari kerja</span>
+    </div>
+    <div class="card-body">
+        <div style="height:320px">
+            <canvas id="chartUnit"></canvas>
         </div>
     </div>
 </div>
@@ -186,8 +234,17 @@
                         </td>
                         <td style="color:var(--primary)">
                             {{ $a->check_out ? \Carbon\Carbon::parse($a->check_out)->format('H:i') : '-' }}
+                            @if($a->is_psw)
+                                <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 4px;border-radius:4px;font-weight:700;margin-left:4px">PSW</span>
+                            @endif
                         </td>
-                        <td><span class="badge badge-{{ $a->status }}">{{ ucfirst($a->status) }}</span></td>
+                        <td>
+                            @if($a->is_lupa_absen)
+                                <span class="badge" style="background:#fef2f2;color:#dc2626">Lupa Pulang</span>
+                            @else
+                                <span class="badge badge-{{ $a->status }}">{{ ucfirst($a->status) }}</span>
+                            @endif
+                        </td>
                     </tr>
                     @empty
                     <tr>
@@ -233,6 +290,34 @@
             <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-100);display:flex;justify-content:space-between;font-size:13px;color:var(--gray-500)">
                 <span>Total record</span>
                 <span style="font-weight:700;color:var(--gray-900)">{{ $totalRekap }}</span>
+            </div>
+        </div>
+    </div>
+    {{-- Unit Performa Terbaik --}}
+    <div class="card">
+        <div class="card-header">
+            <span><i class="bi bi-trophy me-2" style="color:#d97706"></i>Peringkat Kedisiplinan Unit</span>
+        </div>
+        <div class="card-body" style="padding:0">
+            @foreach($data['stats_unit']->take(5) as $idx => $s)
+            <div style="padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:{{ $loop->last ? 'none' : '1px solid var(--gray-50)' }}">
+                <div style="display:flex;align-items:center;gap:15px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:{{ $idx == 0 ? '#fef3c7' : ($idx == 1 ? '#f1f5f9' : ($idx == 2 ? '#ffedd5' : 'var(--gray-50)')) }};color:{{ $idx == 0 ? '#92400e' : ($idx == 1 ? '#475569' : ($idx == 2 ? '#9a3412' : 'var(--gray-500)')) }};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">
+                        {{ $idx+1 }}
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:14px;color:var(--gray-900)">{{ $s['unit'] }}</div>
+                        <div style="font-size:11px;color:var(--gray-400)">{{ $s['total'] }} Record Kehadiran</div>
+                    </div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-weight:800;font-size:16px;color:{{ $s['presentase'] >= 90 ? '#16a34a' : ($s['presentase'] >= 75 ? '#d97706' : '#dc2626') }}">{{ $s['presentase'] }}%</div>
+                    <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;color:var(--gray-400)">Skor Unit</div>
+                </div>
+            </div>
+            @endforeach
+            <div style="padding:16px;text-align:center;background:var(--gray-50)">
+                <a href="{{ route('laporan.rekap') }}" style="font-size:12px;font-weight:700;color:var(--primary);text-decoration:none">Lihat Semua Laporan Unit <i class="bi bi-chevron-right"></i></a>
             </div>
         </div>
     </div>
@@ -462,6 +547,37 @@ new Chart(document.getElementById('chartRekap'), {
         cutout: '68%',
         plugins: {
             legend: { position: 'bottom', labels: { boxWidth: 12, padding: 16, font: { size: 12 } } }
+        }
+    }
+});
+
+// ---- Chart 3: Kehadiran per Unit ----
+new Chart(document.getElementById('chartUnit'), {
+    type: 'bar',
+    data: {
+        labels: @json($data['stats_unit']->pluck('unit')),
+        datasets: [{
+            label: 'Persentase Kehadiran (%)',
+            data: @json($data['stats_unit']->pluck('presentase')),
+            backgroundColor: @json($data['stats_unit']->map(fn($s) => $s['presentase'] >= 90 ? '#16a34a' : ($s['presentase'] >= 75 ? '#d97706' : '#3b82f6'))),
+            borderRadius: 8,
+            maxBarThickness: 40,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { 
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) { return context.parsed.y + '% Kehadiran'; }
+                }
+            }
+        },
+        scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } },
+            y: { beginAtZero: true, max: 100, ticks: { stepSize: 20, font: { size: 11 } }, grid: { borderDash: [5, 5] } }
         }
     }
 });

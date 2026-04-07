@@ -16,6 +16,11 @@ class LaporanController extends Controller
         $tahun = $request->get('tahun', Carbon::now()->year);
         $userId = $request->get('user_id');
         $unit = $request->get('unit');
+        $authUser = auth()->user();
+
+        if ($authUser->isKepalaUnit()) {
+            $unit = $authUser->unit;
+        }
 
         $query = Absensi::with('user')
             ->whereMonth('tanggal', $bulan)
@@ -42,8 +47,12 @@ class LaporanController extends Controller
             ->when($unit, fn($q) => $q->where('unit', $unit))
             ->orderBy('name')->get();
 
-        $units = User::where('role', 'pegawai')->whereNotNull('unit')
-            ->distinct()->orderBy('unit')->pluck('unit');
+        if ($authUser->isKepalaUnit()) {
+            $units = collect([$authUser->unit]);
+        } else {
+            $units = User::where('role', 'pegawai')->whereNotNull('unit')
+                ->distinct()->orderBy('unit')->pluck('unit');
+        }
 
         return view('laporan.index', compact('absensis', 'rekap', 'bulan', 'tahun', 'pegawais', 'userId', 'unit', 'units'));
     }
@@ -54,6 +63,11 @@ class LaporanController extends Controller
         $tahun = $request->get('tahun', Carbon::now()->year);
         $userId = $request->get('user_id');
         $unit = $request->get('unit');
+        $authUser = auth()->user();
+
+        if ($authUser->isKepalaUnit()) {
+            $unit = $authUser->unit;
+        }
 
         $absensis = Absensi::with('user')
             ->whereMonth('tanggal', $bulan)
@@ -98,6 +112,11 @@ class LaporanController extends Controller
         $bulan = $request->get('bulan', Carbon::now()->month);
         $tahun = $request->get('tahun', Carbon::now()->year);
         $unit = $request->get('unit');
+        $authUser = auth()->user();
+
+        if ($authUser->isKepalaUnit()) {
+            $unit = $authUser->unit;
+        }
 
         $users = User::where('role', 'pegawai')
             ->when($unit, fn($q) => $q->where('unit', $unit))
@@ -107,8 +126,12 @@ class LaporanController extends Controller
             ->orderBy('unit')->orderBy('name')
             ->get();
 
-        $units = User::where('role', 'pegawai')->whereNotNull('unit')
-            ->distinct()->orderBy('unit')->pluck('unit');
+        if ($authUser->isKepalaUnit()) {
+            $units = collect([$authUser->unit]);
+        } else {
+            $units = User::where('role', 'pegawai')->whereNotNull('unit')
+                ->distinct()->orderBy('unit')->pluck('unit');
+        }
 
         return view('laporan.rekap', compact('users', 'bulan', 'tahun', 'unit', 'units'));
     }
@@ -118,6 +141,11 @@ class LaporanController extends Controller
         $bulan = $request->get('bulan', Carbon::now()->month);
         $tahun = $request->get('tahun', Carbon::now()->year);
         $unit = $request->get('unit');
+        $authUser = auth()->user();
+
+        if ($authUser->isKepalaUnit()) {
+            $unit = $authUser->unit;
+        }
 
         $users = User::where('role', 'pegawai')
             ->when($unit, fn($q) => $q->where('unit', $unit))
