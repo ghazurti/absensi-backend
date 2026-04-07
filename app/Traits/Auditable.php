@@ -51,15 +51,19 @@ trait Auditable
             foreach ($hidden as $field) unset($newValues[$field]);
         }
 
-        AuditLog::create([
-            'user_id' => Auth::id(),
-            'action' => $action,
-            'model_type' => get_class($this),
-            'model_id' => $this->id,
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id' => Auth::id(),
+                'action' => $action,
+                'model_type' => get_class($this),
+                'model_id' => $this->id,
+                'old_values' => $oldValues,
+                'new_values' => $newValues,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Audit Log failed: ' . $e->getMessage());
+        }
     }
 }

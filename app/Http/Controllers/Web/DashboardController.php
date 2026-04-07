@@ -21,15 +21,13 @@ class DashboardController extends Controller
         if ($user->isAdmin()) {
             $data = [
                 'total_pegawai' => User::where('role', 'pegawai')->count(),
-                'hadir_hari_ini' => Absensi::whereDate('tanggal', $today)->whereIn('status', ['hadir', 'terlambat'])->count(),
-                'terlambat_hari_ini' => Absensi::whereDate('tanggal', $today)->where('status', 'terlambat')->count(),
-                'psw_hari_ini' => Absensi::whereDate('tanggal', $today)->get()->filter->is_psw->count(),
+                'psw_hari_ini' => Absensi::with('shift')->whereDate('tanggal', $today)->get()->filter->is_psw->count(),
                 'lupa_absen_hari_ini' => Absensi::where('tanggal', '<', $today)->get()->filter->is_lupa_absen->count(),
                 'alpha_hari_ini' => User::where('role', 'pegawai')->count() - Absensi::whereDate('tanggal', $today)->count(),
                 'izin_hari_ini' => Izin::where('tanggal_mulai', '<=', $today)->where('tanggal_selesai', '>=', $today)->count(),
                 'rekap_bulan' => Absensi::whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)
                     ->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
-                'absensi_terkini' => Absensi::with('user')->whereDate('tanggal', $today)->latest()->take(10)->get(),
+                'absensi_terkini' => Absensi::with(['user', 'shift'])->whereDate('tanggal', $today)->latest()->take(10)->get(),
                 'stats_unit' => User::where('role', '!=', 'admin')
                     ->whereNotNull('unit')
                     ->select('unit')
