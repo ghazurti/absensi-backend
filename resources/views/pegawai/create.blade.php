@@ -130,6 +130,16 @@
                         @error('email')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
                     </div>
 
+                    <div class="form-group" style="grid-column:1/-1">
+                        <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Role / Hak Akses <span style="color:#dc2626">*</span></label>
+                        <select name="role" class="form-control form-select" required style="padding:12px 16px;border-radius:10px;border:1.5px solid var(--gray-200);height:auto">
+                            <option value="pegawai" {{ old('role') == 'pegawai' ? 'selected' : '' }}>Pegawai (Default)</option>
+                            <option value="kepala_unit" {{ old('role') == 'kepala_unit' ? 'selected' : '' }}>Kepala Unit</option>
+                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Administrator</option>
+                        </select>
+                        @error('role')<div style="color:#dc2626;font-size:12px;margin-top:6px;font-weight:500">{{ $message }}</div>@enderror
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label" style="font-weight:600;margin-bottom:8px;display:block">Password (Opsional)</label>
                         <div style="position:relative">

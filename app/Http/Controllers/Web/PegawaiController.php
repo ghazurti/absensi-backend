@@ -11,7 +11,7 @@ class PegawaiController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::where('role', 'pegawai');
+        $query = User::whereIn('role', ['pegawai', 'kepala_unit']);
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
@@ -45,6 +45,7 @@ class PegawaiController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'pangkat_gol' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:100',
+            'role' => 'required|in:pegawai,kepala_unit,admin',
             'password' => 'nullable|min:6|confirmed',
         ]);
 
@@ -62,7 +63,7 @@ class PegawaiController extends Controller
                 'jabatan' => $request->jabatan,
                 'pangkat_gol' => $request->pangkat_gol,
                 'unit' => $request->unit,
-                'role' => 'pegawai',
+                'role' => $request->role,
                 'password' => Hash::make($password),
             ]);
 
@@ -124,7 +125,7 @@ class PegawaiController extends Controller
                         'jabatan' => trim($data[5]),
                         'pangkat_gol' => trim($data[6]),
                         'unit' => trim($data[7]),
-                        'role' => 'pegawai',
+                        'role' => 'pegawai', // Default for import
                         'password' => Hash::make($nik),
                     ]
                 );
@@ -159,9 +160,10 @@ class PegawaiController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'pangkat_gol' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:100',
+            'role' => 'required|in:pegawai,kepala_unit,admin',
         ]);
 
-        $data = $request->only(['name', 'email', 'nik', 'nip', 'no_hp', 'jabatan', 'pangkat_gol', 'unit']);
+        $data = $request->only(['name', 'email', 'nik', 'nip', 'no_hp', 'jabatan', 'pangkat_gol', 'unit', 'role']);
 
         if ($request->filled('password')) {
             $request->validate(['password' => 'min:6|confirmed']);

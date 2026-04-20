@@ -63,7 +63,6 @@
                             </div>
                             <div>
                                 <div style="font-weight:700;font-size:15px;color:var(--gray-900)">{{ $p->name }}</div>
-                                <div style="font-size:12px;color:var(--primary);font-weight:600;margin-top:2px">ID: {{ str_pad($p->id, 4, '0', STR_PAD_LEFT) }}</div>
                             </div>
                         </div>
                     </td>
@@ -75,13 +74,21 @@
                     </td>
                     <td style="padding:16px 24px">
                         <div style="font-size:13.5px;font-weight:600;color:var(--gray-800)">{{ $p->jabatan ?? '-' }}</div>
-                        <div style="margin-top:6px">
+                        <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
                             @if($p->unit)
                             <span style="background:#f1f5f9;color:#475569;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #e2e8f0;display:inline-block">
                                 {{ $p->unit }}
                             </span>
-                            @else
-                            <span style="color:var(--gray-300);font-size:12px italic">Unit Belum Diatur</span>
+                            @endif
+
+                            @if($p->role === 'kepala_unit')
+                            <span style="background:#ecfdf5;color:#059669;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #a7f3d0;display:inline-block">
+                                Kepala Unit
+                            </span>
+                            @elseif($p->role === 'admin')
+                            <span style="background:#fff7ed;color:#c2410c;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1px solid #fed7aa;display:inline-block">
+                                Admin
+                            </span>
                             @endif
                         </div>
                     </td>
@@ -99,6 +106,9 @@
                     </td>
                     <td style="padding:16px 24px;text-align:right">
                         <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
+                            <button type="button" onclick="openEnrollModal('{{ $p->id }}', '{{ addslashes($p->name) }}')" class="btn" style="padding:8px 12px;background:#fdf4ff;color:#a21caf;border:1px solid #f5d0fe;border-radius:10px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.background='#f5d0fe'" onmouseout="this.style.background='#fdf4ff'">
+                                <i class="bi bi-fingerprint"></i> Daftar Jari
+                            </button>
                             <a href="{{ route('pegawai.edit', $p) }}" class="btn" style="padding:8px 12px;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:10px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s" onmouseover="this.style.background='#bae6fd'" onmouseout="this.style.background='#f0f9ff'">
                                 <i class="bi bi-pencil-square"></i> Edit
                             </a>
@@ -171,8 +181,122 @@
     // Close modal when clicking outside
     window.onclick = function(event) {
         let modal = document.getElementById('importModal');
-        if (event.target == modal) {
-            closeImportModal();
+        let enrollModal = document.getElementById('enrollModal');
+        if (event.target == modal) closeImportModal();
+        if (event.target == enrollModal) closeEnrollModal();
+    }
+
+    // Fingerprint Enrollment
+    let activeUserId = null;
+
+    function openEnrollModal(id, name) {
+        activeUserId = id;
+        document.getElementById('enrollName').innerText = name;
+        document.getElementById('enrollModal').style.display = 'flex';
+        document.getElementById('enrollStatus').innerHTML = '<i class="bi bi-info-circle"></i> Klik tombol di bawah untuk mulai rekam';
+        document.getElementById('enrollStatus').className = 'status-box info';
+    }
+
+    function closeEnrollModal() {
+        document.getElementById('enrollModal').style.display = 'none';
+    }
+
+    async function startEnroll() {
+        const statusEl = document.getElementById('enrollStatus');
+        statusEl.innerHTML = '<span class="enroll-spinner"></span> Menunggu sidik jari ditempelkan (3x scan)...';
+        statusEl.className = 'status-box info';
+
+        try {
+            // Simulasi pendaftaran ke middleware lokal
+            const response = await fetch('http://localhost:14500/enroll', { method: 'GET' });
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                saveEnrollment(data.template);
+            } else {
+                statusEl.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Gagal: ' + data.message;
+                statusEl.className = 'status-box error';
+            }
+        } catch (err) {
+            console.warn('Middleware tidak terdeteksi, simulasi pendaftaran...');
+            setTimeout(() => {
+                if (confirm('Jalankan simulasi pendaftaran sidik jari?')) {
+                    saveEnrollment('SIMULATED_TEMPLATE_DATA_' + Math.random());
+                } else {
+                    statusEl.innerHTML = '<i class="bi bi-x-circle"></i> Pendaftaran dibatalkan';
+                    statusEl.className = 'status-box error';
+                }
+            }, 1000);
+        }
+    }
+
+    async function saveEnrollment(template) {
+        const statusEl = document.getElementById('enrollStatus');
+        statusEl.innerHTML = '<span class="enroll-spinner"></span> Menyimpan ke server...';
+
+        try {
+            const response = await fetch('{{ route("fingerprint.enroll") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    user_id: activeUserId,
+                    fingerprint_data: template,
+                    fingerprint_id: 'FP-' + activeUserId
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                statusEl.innerHTML = '<i class="bi bi-check-circle"></i> Berhasil Terdaftar!';
+                statusEl.className = 'status-box success';
+                setTimeout(() => {
+                    closeEnrollModal();
+                    Swal.fire('Berhasil', 'Sidik jari ' + document.getElementById('enrollName').innerText + ' telah terdaftar', 'success');
+                }, 1500);
+            } else {
+                statusEl.innerHTML = '<i class="bi bi-x-circle"></i> Gagal Simpan: ' + result.message;
+                statusEl.className = 'status-box error';
+            }
+        } catch (err) {
+            statusEl.innerHTML = '<i class="bi bi-exclamation-octagon"></i> Kesalahan Server';
+            statusEl.className = 'status-box error';
         }
     }
 </script>
+
+{{-- Modal Enroll --}}
+<div id="enrollModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;width:100%;max-width:450px;border-radius:16px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)">
+        <div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+            <h3 style="margin:0;font-size:17px;font-weight:800;color:#1e293b">Pendaftaran Sidik Jari</h3>
+            <button onclick="closeEnrollModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="padding:24px;text-align:center">
+            <div style="font-size:14px;color:#64748b;margin-bottom:4px">Registrasi Sidik Jari untuk:</div>
+            <div id="enrollName" style="font-size:18px;font-weight:800;color:var(--primary);margin-bottom:20px">Nama Pegawai</div>
+            
+            <div id="enrollStatus" class="status-box info">
+                <i class="bi bi-info-circle"></i> Klik mulai untuk merekam
+            </div>
+
+            <div style="margin-top:30px;display:flex;flex-direction:column;gap:12px">
+                <button type="button" onclick="startEnroll()" style="padding:14px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+                    <i class="bi bi-play-fill" style="font-size:18px"></i> MULAI REKAM SEKARANG
+                </button>
+                <button type="button" onclick="closeEnrollModal()" style="padding:12px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:12px;font-weight:600;cursor:pointer">Batal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .status-box { padding:14px; border-radius:12px; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; }
+    .status-box.info { background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; }
+    .status-box.success { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+    .status-box.error { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+    .enroll-spinner { width:16px; height:16px; border:2px solid #d1d5db; border-top-color:var(--primary); border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+</style>

@@ -21,6 +21,24 @@
     .gps-bar.ok { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
     .gps-bar.err { border-color: #fecaca; background: #fef2f2; color: #dc2626; }
 
+    .btn-finger { 
+        background: #f8fafc; 
+        border: 2px dashed var(--gray-200); 
+        color: var(--gray-600); 
+        padding: 20px; 
+        border-radius: 12px; 
+        width: 100%; 
+        margin-bottom: 20px;
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+    .btn-finger:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+    .btn-finger i { font-size: 32px; }
+
     .time-display { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .time-box { border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 14px; text-align: center; }
     .time-box .tl { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
@@ -56,6 +74,13 @@
                     Shift {{ ucfirst($shiftHariIni->jenis_shift) }}: {{ $shiftHariIni->jam_masuk }} — {{ $shiftHariIni->jam_keluar }}
                 </div>
                 @endif
+
+                {{-- Tombol Fingerprint --}}
+                <button type="button" class="btn-finger" onclick="scanFingerprint()">
+                    <i class="bi bi-fingerprint"></i>
+                    <div style="font-weight: 700; font-size: 14px;">ABSEN SIDIK JARI</div>
+                    <div style="font-size: 11px;">Tempelkan jari pada alat U.are.U 4500</div>
+                </button>
 
                 <div class="time-display">
                     <div class="time-box">
@@ -188,9 +213,20 @@
                         </td>
                         @endif
                         <td style="color:#16a34a;font-weight:600">{{ $a->check_in ? \Carbon\Carbon::parse($a->check_in)->format('H:i') : '-' }}</td>
-                        <td style="color:var(--primary)">{{ $a->check_out ? \Carbon\Carbon::parse($a->check_out)->format('H:i') : '-' }}</td>
+                        <td style="color:var(--primary)">
+                            {{ $a->check_out ? \Carbon\Carbon::parse($a->check_out)->format('H:i') : '-' }}
+                            @if($a->is_psw)
+                                <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 4px;border-radius:4px;font-weight:700;margin-left:4px">PSW</span>
+                            @endif
+                        </td>
                         <td style="color:var(--gray-400);font-size:12px">{{ $dur ?? '-' }}</td>
-                        <td><span class="badge badge-{{ $a->status }}">{{ ucfirst($a->status) }}</span></td>
+                        <td>
+                            @if($a->is_lupa_absen)
+                                <span class="badge" style="background:#fef2f2;color:#dc2626">Lupa Pulang</span>
+                            @else
+                                <span class="badge badge-{{ $a->status }}">{{ ucfirst($a->status) }}</span>
+                            @endif
+                        </td>
                     </tr>
                     @empty
                     <tr>
@@ -305,6 +341,76 @@ function hitungJarak(lat1,lon1,lat2,lon2) {
     const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
     const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// Logika Sidik Jari
+async function scanFingerprint() {
+    Swal.fire({
+        title: 'Menunggu Sidik Jari...',
+        text: 'Silakan tempelkan jari Anda pada alat scanner',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        // Simulasi Panggilan ke Middleware Lokal (localhost)
+        // Umumnya SDK Digital Persona menyediakan listener di port tertentu
+        const response = await fetch('http://localhost:14500/capture', { // Port simulasi middleware
+            method: 'GET',
+            timeout: 10000
+        });
+
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            submitFingerprint(data.template);
+        } else {
+            Swal.fire('Gagal', 'Sidik jari tidak terbaca dengan jelas', 'error');
+        }
+    } catch (err) {
+        // Karena ini demo, jika middleware tidak ada, kita simulasi sukses
+        console.warn('Middleware tidak ditemukan, menjalankan simulasi...');
+        setTimeout(() => {
+            Swal.fire({
+                icon: 'question',
+                title: 'Simulasi Sidik Jari',
+                text: 'Koneksi ke alat tidak ditemukan. Jalankan simulasi absen?',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Absen (Simulasi)'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    submitFingerprint('SAMPLE_FINGERPRINT_TEMPLATE_DATA');
+                }
+            });
+        }, 1500);
+    }
+}
+
+async function submitFingerprint(template) {
+    try {
+        const response = await fetch('{{ route("fingerprint.attendance") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ fingerprint_data: template })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            Swal.fire('Berhasil!', result.message, 'success').then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire('Gagal', result.message || 'Terjadi kesalahan', 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'Gagal menghubungkan ke server absensi', 'error');
+    }
 }
 </script>
 @endif

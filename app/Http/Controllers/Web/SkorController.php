@@ -34,12 +34,26 @@ class SkorController extends Controller
 
         if ($authUser->isAdmin()) {
             $userId   = $request->get('user_id');
-            $pegawais = User::where('role', 'pegawai')
+            $pegawais = User::whereIn('role', ['pegawai', 'kepala_unit'])
                 ->when($unit, fn($q) => $q->where('unit', $unit))
                 ->orderBy('name')->get();
-            $units   = User::where('role', 'pegawai')->whereNotNull('unit')
+            $units   = User::whereNotNull('unit')
                 ->distinct()->orderBy('unit')->pluck('unit');
             $pegawai = $userId ? User::find($userId) : null;
+        } elseif ($authUser->isKepalaUnit()) {
+            $userId   = $request->get('user_id');
+            $unit     = $authUser->unit; // Force to their own unit
+            $pegawais = User::where('role', 'pegawai')
+                ->where('unit', $unit)
+                ->orderBy('name')->get();
+            $units    = collect([$unit]);
+            $pegawai  = $userId ? User::where('unit', $unit)->find($userId) : null;
+            
+            // If no user selected, don't show anyone by default or show the first subordinate
+            if (!$pegawai && $pegawais->count() > 0 && $request->has('user_id')) {
+                // User requested an ID but not in their unit
+                $pegawai = null;
+            }
         } else {
             $pegawai  = $authUser;
             $pegawais = collect([$pegawai]);
@@ -55,9 +69,14 @@ class SkorController extends Controller
     public function exportExcel(Request $request)
     {
         try {
+            $authUser = auth()->user();
             $bulan  = (int) $request->get('bulan', Carbon::now()->month);
             $tahun  = (int) $request->get('tahun', Carbon::now()->year);
             $unit   = $request->get('unit');
+
+            if ($authUser->isKepalaUnit()) {
+                $unit = $authUser->unit;
+            }
 
             $namaBulan = Carbon::create($tahun, $bulan)->locale('id')->isoFormat('MMMM-YYYY');
             $filename  = 'skor-kehadiran-' . ($unit ? strtolower(str_replace(' ', '-', $unit)) . '-' : '') . $namaBulan . '.xlsx';
@@ -79,7 +98,19 @@ class SkorController extends Controller
         $authUser = auth()->user();
         $bulan    = (int) $request->get('bulan', Carbon::now()->month);
         $tahun    = (int) $request->get('tahun', Carbon::now()->year);
-        $userId   = $authUser->isAdmin() ? $request->get('user_id', $authUser->id) : $authUser->id;
+        
+        if ($authUser->isAdmin()) {
+            $userId = $request->get('user_id', $authUser->id);
+        } elseif ($authUser->isKepalaUnit()) {
+            $userId = $request->get('user_id');
+            // Ensure the user being printed is in the same unit
+            $pegawaiInUnit = User::where('unit', $authUser->unit)->where('id', $userId)->first();
+            if (!$pegawaiInUnit) {
+                abort(403, 'Anda tidak memiliki akses ke data pegawai ini.');
+            }
+        } else {
+            $userId = $authUser->id;
+        }
 
         $pegawai = User::findOrFail($userId);
 
