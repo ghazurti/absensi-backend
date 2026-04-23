@@ -21,7 +21,7 @@ class ShiftController extends Controller
         }
 
         $shifts = $query->orderBy('tanggal')->get();
-        $users = $user->isAdmin() ? \App\Models\User::where('role', 'pegawai')->orderBy('name')->get() : [];
+        $users = $user->isAdmin() ? \App\Models\User::where('role', 'pegawai')->where('jenis_absensi', 'shift')->orderBy('name')->get() : [];
 
         return view('shift.index', compact('shifts', 'bulan', 'tahun', 'users'));
     }
@@ -41,7 +41,13 @@ class ShiftController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
-        $userIds = $isAdmin ? $request->user_ids : [auth()->id()];
+        $rawIds  = $isAdmin ? $request->user_ids : [auth()->id()];
+        $userIds = \App\Models\User::whereIn('id', $rawIds)->where('jenis_absensi', 'shift')->pluck('id')->toArray();
+
+        if (empty($userIds)) {
+            return back()->with('error', 'Tidak ada pegawai shift yang dipilih. Pegawai normal tidak perlu jadwal shift.');
+        }
+
         $period = \Carbon\CarbonPeriod::create($request->tanggal_mulai, $request->tanggal_selesai);
         
         // Cache data libur untuk efisiensi

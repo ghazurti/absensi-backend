@@ -14,6 +14,7 @@ class AdminSeeder extends Seeder
             ['email' => 'rsud123@rsud-baubau.go.id'],
             [
                 'name' => 'Administrator RSUD',
+                'nik' => '000000000001',
                 'nip' => '000000000001',
                 'jabatan' => 'Administrator',
                 'unit' => 'IT',

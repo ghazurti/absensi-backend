@@ -107,7 +107,45 @@
             </div>
         </div>
 
-        {{-- Section 3: Akun Sistem --}}
+        {{-- Section 3: Jenis Absensi --}}
+        <div class="card" style="border:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border-radius:16px;margin-bottom:24px">
+            <div class="card-header" style="background:transparent;padding:20px 24px;border-bottom:1px solid var(--gray-100)">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:36px;height:36px;border-radius:10px;background:#fff7ed;color:#ea580c;display:flex;align-items:center;justify-content:center">
+                        <i class="bi bi-clock-history" style="font-size:18px"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700;font-size:16px;color:var(--gray-900)">Jenis Absensi</div>
+                        <div style="font-size:12px;color:var(--gray-400)">Tentukan pola kehadiran pegawai</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" style="padding:24px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <label style="display:flex;align-items:flex-start;gap:14px;padding:18px;border:2px solid var(--gray-200);border-radius:12px;cursor:pointer;transition:all .2s" id="card-normal">
+                        <input type="radio" name="jenis_absensi" value="normal" {{ old('jenis_absensi','normal')=='normal'?'checked':'' }}
+                            style="margin-top:3px;accent-color:#2563eb;width:18px;height:18px" onchange="highlightCard()">
+                        <div>
+                            <div style="font-weight:700;font-size:15px;color:var(--gray-900)">Normal</div>
+                            <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Jam kantor tetap: <strong>07:30 – 16:00</strong></div>
+                            <div style="font-size:12px;color:var(--gray-400);margin-top:2px">Berlaku Senin – Jumat</div>
+                        </div>
+                    </label>
+                    <label style="display:flex;align-items:flex-start;gap:14px;padding:18px;border:2px solid var(--gray-200);border-radius:12px;cursor:pointer;transition:all .2s" id="card-shift">
+                        <input type="radio" name="jenis_absensi" value="shift" {{ old('jenis_absensi')=='shift'?'checked':'' }}
+                            style="margin-top:3px;accent-color:#2563eb;width:18px;height:18px" onchange="highlightCard()">
+                        <div>
+                            <div style="font-weight:700;font-size:15px;color:var(--gray-900)">Shift</div>
+                            <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Jadwal bergilir: <strong>Pagi / Siang / Malam</strong></div>
+                            <div style="font-size:12px;color:var(--gray-400);margin-top:2px">Jadwal diatur per periode</div>
+                        </div>
+                    </label>
+                </div>
+                @error('jenis_absensi')<div style="color:#dc2626;font-size:12px;margin-top:8px;font-weight:500">{{ $message }}</div>@enderror
+            </div>
+        </div>
+
+        {{-- Section 4: Akun Sistem --}}
         <div class="card" style="border:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border-radius:16px;margin-bottom:32px">
             <div class="card-header" style="background:transparent;padding:20px 24px;border-bottom:1px solid var(--gray-100)">
                 <div style="display:flex;align-items:center;gap:12px">
@@ -154,6 +192,15 @@
         </div>
 
         <script>
+            function highlightCard() {
+                const val = document.querySelector('input[name="jenis_absensi"]:checked')?.value;
+                document.getElementById('card-normal').style.borderColor = val === 'normal' ? '#2563eb' : 'var(--gray-200)';
+                document.getElementById('card-normal').style.background  = val === 'normal' ? '#eff6ff' : '';
+                document.getElementById('card-shift').style.borderColor  = val === 'shift'  ? '#2563eb' : 'var(--gray-200)';
+                document.getElementById('card-shift').style.background   = val === 'shift'  ? '#eff6ff' : '';
+            }
+            highlightCard();
+
             function togglePass(id) {
                 const el = document.getElementById(id);
                 el.type = el.type === 'password' ? 'text' : 'password';

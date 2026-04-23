@@ -50,7 +50,28 @@
                 @endif
             </div>
             <div class="card-body">
-                @if($shiftHariIni)
+                @if(auth()->user()->jenis_absensi === 'normal')
+                    @php
+                        $hariIni   = \Carbon\Carbon::today()->dayOfWeek;
+                        $hariLibur = config('attendance.hari_libur', [0, 6]);
+                        $jamKantor = config('attendance.jam_kantor')[$hariIni] ?? null;
+                    @endphp
+                    @if($liburHariIni)
+                    <div style="background:#fef2f2;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#dc2626;font-weight:600;display:flex;align-items:center;gap:8px">
+                        <i class="bi bi-calendar-x"></i> Libur Nasional: {{ $liburHariIni->nama_libur }} — absensi tidak tersedia
+                    </div>
+                    @elseif(in_array($hariIni, $hariLibur))
+                    <div style="background:#fef2f2;border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#dc2626;font-weight:600;display:flex;align-items:center;gap:8px">
+                        <i class="bi bi-calendar-x"></i> Hari ini libur — absensi tidak tersedia
+                    </div>
+                    @elseif($jamKantor)
+                    <div style="background:var(--primary-light);border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--primary);font-weight:600;display:flex;align-items:center;gap:8px">
+                        <i class="bi bi-clock"></i>
+                        Jam Kantor: {{ $jamKantor['masuk'] }} — {{ $jamKantor['keluar'] }}
+                        &nbsp;<span style="font-weight:400;opacity:.7">(terlambat setelah {{ \Carbon\Carbon::parse($jamKantor['masuk'])->addMinutes(config('attendance.toleransi_menit', 15))->format('H:i') }})</span>
+                    </div>
+                    @endif
+                @elseif($shiftHariIni)
                 <div style="background:var(--primary-light);border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--primary);font-weight:600;display:flex;align-items:center;gap:8px">
                     <i class="bi bi-clock"></i>
                     Shift {{ ucfirst($shiftHariIni->jenis_shift) }}: {{ $shiftHariIni->jam_masuk }} — {{ $shiftHariIni->jam_keluar }}

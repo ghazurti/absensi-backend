@@ -45,6 +45,7 @@ class PegawaiController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'pangkat_gol' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:100',
+            'jenis_absensi' => 'required|in:normal,shift',
             'password' => 'nullable|min:6|confirmed',
         ]);
 
@@ -62,6 +63,7 @@ class PegawaiController extends Controller
                 'jabatan' => $request->jabatan,
                 'pangkat_gol' => $request->pangkat_gol,
                 'unit' => $request->unit,
+                'jenis_absensi' => $request->jenis_absensi,
                 'role' => 'pegawai',
                 'password' => Hash::make($password),
             ]);
@@ -159,9 +161,10 @@ class PegawaiController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'pangkat_gol' => 'nullable|string|max:100',
             'unit' => 'nullable|string|max:100',
+            'jenis_absensi' => 'required|in:normal,shift',
         ]);
 
-        $data = $request->only(['name', 'email', 'nik', 'nip', 'no_hp', 'jabatan', 'pangkat_gol', 'unit']);
+        $data = $request->only(['name', 'email', 'nik', 'nip', 'no_hp', 'jabatan', 'pangkat_gol', 'unit', 'jenis_absensi']);
 
         if ($request->filled('password')) {
             $request->validate(['password' => 'min:6|confirmed']);
