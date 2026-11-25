@@ -15,32 +15,38 @@ Route::post('/login', [AuthController::class, 'login']);
 // Protected routes
 Route::middleware('auth:api')->name('api.')->group(function () {
 
-    // Auth
+    // Logout tetap bisa walau perangkat sudah direset admin
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/profile', [AuthController::class, 'updateProfile']);
 
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    // Rute yang wajib cocok dengan perangkat terdaftar (1 HP = 1 pegawai)
+    Route::middleware('device.bound')->group(function () {
+        // Auth
+        Route::post('/refresh', [AuthController::class, 'refresh']);
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/profile', [AuthController::class, 'updateProfile']);
 
-    // Shift (pegawai bisa CRUD shift sendiri)
-    Route::apiResource('shifts', ShiftController::class);
+        // Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // Absensi
-    Route::get('/absensi', [AbsensiController::class, 'index']);
-    Route::post('/absensi/check-in', [AbsensiController::class, 'checkIn']);
-    Route::post('/absensi/check-out', [AbsensiController::class, 'checkOut']);
-    Route::get('/absensi/rekap', [AbsensiController::class, 'rekap']);
+        // Shift (pegawai bisa CRUD shift sendiri)
+        Route::apiResource('shifts', ShiftController::class);
 
-    // Skor Kehadiran
-    Route::get('/skor', [SkorController::class, 'index']);
+        // Absensi
+        Route::get('/absensi', [AbsensiController::class, 'index']);
+        Route::post('/absensi/check-in', [AbsensiController::class, 'checkIn']);
+        Route::post('/absensi/check-out', [AbsensiController::class, 'checkOut']);
+        Route::get('/absensi/rekap', [AbsensiController::class, 'rekap']);
 
-    // Izin
-    Route::apiResource('izin', IzinController::class)->except(['update', 'edit', 'create']);
+        // Skor Kehadiran
+        Route::get('/skor', [SkorController::class, 'index']);
 
-    // Admin only
-    Route::middleware('admin')->group(function () {
-        Route::apiResource('pegawai', PegawaiController::class);
+        // Izin
+        Route::apiResource('izin', IzinController::class)->except(['update', 'edit', 'create']);
+
+        // Admin only
+        Route::middleware('admin')->group(function () {
+            Route::post('/pegawai/{pegawai}/reset-device', [PegawaiController::class, 'resetDevice']);
+            Route::apiResource('pegawai', PegawaiController::class);
+        });
     });
 });

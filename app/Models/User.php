@@ -24,6 +24,9 @@ class User extends Authenticatable implements JWTSubject
         'unit',
         'jenis_absensi',
         'role',
+        'device_id',
+        'device_name',
+        'device_bound_at',
         'foto',
         'password',
     ];
@@ -37,6 +40,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'email_verified_at' => 'datetime',
+            'device_bound_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
